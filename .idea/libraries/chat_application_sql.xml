@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="chat_application.sql">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/Chat_Application/db/chat_application.sql.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

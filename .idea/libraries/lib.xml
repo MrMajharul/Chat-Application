@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="lib">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/Chat_Application/lib/miglayout-core.jar!/" />
+      <root url="jar://$PROJECT_DIR$/Chat_Application/lib/flatlaf-extras-3.4.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/Chat_Application/lib/miglayout-swing.jar!/" />
+      <root url="jar://$PROJECT_DIR$/Chat_Application/lib/flatlaf-3.4.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/Chat_Application/lib/flatlaf-fonts-roboto-2.137.jar!/" />
+      <root url="jar://$PROJECT_DIR$/Chat_Application/lib/jsvg-1.4.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
