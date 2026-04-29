@@ -9,14 +9,18 @@ import com.corundumstudio.socketio.listener.DataListener;
 import com.corundumstudio.socketio.listener.DisconnectListener;
 import app.MessageType;
 import model.Model_Client;
+import model.Model_Create_Group;
 import model.Model_File;
+import model.Model_Group;
 import model.Model_Login;
 import model.Model_Message;
+import model.Model_Message_Status;
 import model.Model_Package_Sender;
 import model.Model_Receive_Image;
 import model.Model_Receive_Message;
 import model.Model_Register;
 import model.Model_History;
+import model.Model_Update_Avatar;
 import model.Model_Reques_File;
 import model.Model_Send_Message;
 import model.Model_User_Account;
@@ -33,6 +37,7 @@ public class Service {
     private ServiceUser serviceUser;
     private ServiceFIle serviceFile;
     private ServiceMessage serviceMessage;
+    private ServiceGroup serviceGroup;
     private List<Model_Client> listClient;
     private JTextArea textArea;
     private final int PORT_NUMBER = 9999;
@@ -49,6 +54,7 @@ public class Service {
         serviceUser = new ServiceUser();
         serviceFile = new ServiceFIle();
         serviceMessage = new ServiceMessage();
+        serviceGroup = new ServiceGroup();
         listClient = new ArrayList<>();
     }
     
@@ -109,7 +115,58 @@ public class Service {
         server.addEventListener("send_to_user", Model_Send_Message.class, new DataListener<Model_Send_Message>() {
             @Override
             public void onData(SocketIOClient sioc, Model_Send_Message t, AckRequest ar) throws Exception {
-                sendToClient(t, ar);
+                sendToClient(sioc, t, ar);
+            }
+        });
+        server.addEventListener("send_to_group", Model_Send_Message.class, new DataListener<Model_Send_Message>() {
+            @Override
+            public void onData(SocketIOClient sioc, Model_Send_Message t, AckRequest ar) throws Exception {
+                try {
+                    // Persist group message
+                    ServiceMessage.SavedMessage saved = serviceMessage.saveMessage(t);
+                    if (saved != null) {
+                        ar.sendAckData(true, saved.getMessageID(), saved.getCreatedAt(), t.getClientId());
+                    } else {
+                        ar.sendAckData(false, 0, System.currentTimeMillis(), t.getClientId());
+                    }
+                    // Notify all group members
+                    List<Integer> members = serviceGroup.getGroupMembers(t.getToUserID());
+                    long createdAt = saved != null ? saved.getCreatedAt() : System.currentTimeMillis();
+                    int messageID = saved != null ? saved.getMessageID() : 0;
+                    int status = saved != null ? saved.getStatus() : 0;
+                    for (int userID : members) {
+                        for (Model_Client c : listClient) {
+                            if (c.getUser().getUserID() == userID) {
+                                Model_Receive_Message receive = new Model_Receive_Message(messageID, t.getMessageType(),
+                                        t.getFromUserID(), t.getText(), null, createdAt, status,
+                                        t.getReplyToMessageID(), t.getReplyUserName(), t.getReplyText());
+                                receive.setGroupID(t.getToUserID());
+                                c.getClient().sendEvent("receive_ms", receive);
+                                break;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    ar.sendAckData(false);
+                    if (textArea != null) {
+                        textArea.append("Send group error: " + e.getMessage() + "\n");
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        server.addEventListener("message_delivered", Model_Message_Status.class, new DataListener<Model_Message_Status>() {
+            @Override
+            public void onData(SocketIOClient sioc, Model_Message_Status t, AckRequest ar) throws Exception {
+                serviceMessage.updateStatus(t.getMessageID(), 1);
+                notifySenderStatus(t.getFromUserID(), t.getMessageID(), 1);
+            }
+        });
+        server.addEventListener("message_seen", Model_Message_Status.class, new DataListener<Model_Message_Status>() {
+            @Override
+            public void onData(SocketIOClient sioc, Model_Message_Status t, AckRequest ar) throws Exception {
+                serviceMessage.updateStatus(t.getMessageID(), 2);
+                notifySenderStatus(t.getFromUserID(), t.getMessageID(), 2);
             }
         });
         server.addEventListener("load_history", Model_History.class, new DataListener<Model_History>() {
@@ -121,6 +178,92 @@ public class Service {
                     ar.sendAckData();
                     if (textArea != null) {
                         textArea.append("History error: " + e + "\n");
+                    }
+                }
+            }
+        });
+        server.addEventListener("load_group_history", Model_History.class, new DataListener<Model_History>() {
+            @Override
+            public void onData(SocketIOClient sioc, Model_History t, AckRequest ar) throws Exception {
+                try {
+                    ar.sendAckData(serviceMessage.getGroupHistory(t.getToUserID(), t.getLimit()).toArray());
+                } catch (Exception e) {
+                    ar.sendAckData();
+                    if (textArea != null) {
+                        textArea.append("Group history error: " + e + "\n");
+                    }
+                }
+            }
+        });
+        server.addEventListener("create_group", Model_Create_Group.class, new DataListener<Model_Create_Group>() {
+            @Override
+            public void onData(SocketIOClient sioc, Model_Create_Group t, AckRequest ar) throws Exception {
+                try {
+                    if (t == null) {
+                        throw new Exception("Create group data is null");
+                    }
+                    if (t.getGroupName() == null || t.getGroupName().trim().isEmpty()) {
+                        throw new Exception("Group name cannot be empty");
+                    }
+                    if (t.getMembers() == null || t.getMembers().isEmpty()) {
+                        throw new Exception("Group must have at least one member");
+                    }
+                    
+                    Model_Group group = serviceGroup.createGroup(t);
+                    if (group != null) {
+                        textArea.append("Group created: " + group.getGroupName() + " (ID: " + group.getGroupID() + ")\n");
+                        ar.sendAckData(true, group);
+                        
+                        // Notify all members about the new group
+                        if (t.getMembers() != null) {
+                            for (int userID : t.getMembers()) {
+                                for (Model_Client c : listClient) {
+                                    if (c.getUser().getUserID() == userID) {
+                                        c.getClient().sendEvent("new_group", group);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        ar.sendAckData(false);
+                        textArea.append("Failed to create group: " + t.getGroupName() + "\n");
+                    }
+                } catch (Exception e) {
+                    ar.sendAckData(false);
+                    if (textArea != null) {
+                        textArea.append("Create group error: " + e.getMessage() + "\n");
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        server.addEventListener("list_group", Integer.class, new DataListener<Integer>() {
+            @Override
+            public void onData(SocketIOClient sioc, Integer userID, AckRequest ar) throws Exception {
+                try {
+                    List<Model_Group> list = serviceGroup.getGroups(userID);
+                    sioc.sendEvent("list_group", list.toArray());
+                } catch (SQLException e) {
+                    System.err.println(e);
+                }
+            }
+        });
+        server.addEventListener("update_avatar", Model_Update_Avatar.class, new DataListener<Model_Update_Avatar>() {
+            @Override
+            public void onData(SocketIOClient sioc, Model_Update_Avatar t, AckRequest ar) throws Exception {
+                try {
+                    Model_User_Account user = serviceUser.updateAvatar(t.getUserID(), t.getImageBase64());
+                    if (user != null) {
+                        ar.sendAckData(true, user);
+                        server.getBroadcastOperations().sendEvent("user_update", user);
+                    } else {
+                        ar.sendAckData(false);
+                    }
+                } catch (Exception e) {
+                    ar.sendAckData(false);
+                    if (textArea != null) {
+                        textArea.append("Avatar update error: " + e + "\n");
                     }
                 }
             }
@@ -192,7 +335,7 @@ public class Service {
         listClient.add(new Model_Client(client, user));
     }
     
-    private void sendToClient(Model_Send_Message data, AckRequest ar) {
+    private void sendToClient(SocketIOClient sender, Model_Send_Message data, AckRequest ar) {
         if (data.getMessageType() == MessageType.IMAGE.getValue() || data.getMessageType() == MessageType.FILE.getValue()) {
             try {
                 Model_File file = serviceFile.addFileReceiver(data.getText());
@@ -203,20 +346,64 @@ public class Service {
             }
         } else {
             // Persist text/emoji messages (types 1/2) so clients can load history later
-            serviceMessage.saveMessage(data.getMessageType(), data.getFromUserID(), data.getToUserID(), data.getText(), null);
+            ServiceMessage.SavedMessage saved = serviceMessage.saveMessage(data);
+            if (saved != null) {
+                ar.sendAckData(true, saved.getMessageID(), saved.getCreatedAt(), data.getClientId());
+            } else {
+                ar.sendAckData(false, 0, System.currentTimeMillis(), data.getClientId());
+            }
             for (Model_Client c : listClient) {
                 if (c.getUser().getUserID() == data.getToUserID()) {
-                    c.getClient().sendEvent("receive_ms", new Model_Receive_Message(data.getMessageType(), data.getFromUserID(), data.getText(), null));
+                    int messageID = saved != null ? saved.getMessageID() : 0;
+                    long createdAt = saved != null ? saved.getCreatedAt() : System.currentTimeMillis();
+                    int status = saved != null ? saved.getStatus() : 0;
+                    c.getClient().sendEvent("receive_ms",
+                            new Model_Receive_Message(messageID, data.getMessageType(), data.getFromUserID(),
+                                    data.getText(), null, createdAt, status, data.getReplyToMessageID(),
+                                    data.getReplyUserName(), data.getReplyText()));
                     break;
                 }
             }
         }
     }
+
+    private void notifySenderStatus(int fromUserID, int messageID, int status) {
+        for (Model_Client c : listClient) {
+            if (c.getUser().getUserID() == fromUserID) {
+                c.getClient().sendEvent("message_status", messageID, status);
+                break;
+            }
+        }
+    }
     
     private void sendTempFileToClient(Model_Send_Message data, Model_Receive_Image dataImage) {
+        Integer fileID = dataImage != null ? dataImage.getFileID() : null;
+        ServiceMessage.SavedMessage saved = serviceMessage.saveMessage(data, fileID);
+        int messageID = saved != null ? saved.getMessageID() : 0;
+        long createdAt = saved != null ? saved.getCreatedAt() : System.currentTimeMillis();
+        int status = saved != null ? saved.getStatus() : 0;
+        String fileExtension = null;
+        Long fileSize = null;
+        try {
+            if (fileID != null) {
+                Model_File file = serviceFile.getFile(fileID);
+                fileExtension = file.getFileExtension();
+                fileSize = file.getFileSize();
+                if (data.getMessageType() == MessageType.IMAGE.getValue()) {
+                    if (file.getBlurHash() != null && file.getWidth() != null && file.getHeight() != null) {
+                        dataImage = new Model_Receive_Image(fileID, file.getBlurHash(), file.getWidth(), file.getHeight());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("File info error: " + e);
+        }
         for (Model_Client c : listClient) {
             if (c.getUser().getUserID() == data.getToUserID()) {
-                c.getClient().sendEvent("receive_ms", new Model_Receive_Message(data.getMessageType(), data.getFromUserID(), data.getText(), dataImage));
+                c.getClient().sendEvent("receive_ms",
+                        new Model_Receive_Message(messageID, data.getMessageType(), data.getFromUserID(), data.getText(),
+                                dataImage, createdAt, status, data.getReplyToMessageID(), data.getReplyUserName(),
+                                data.getReplyText(), fileID, fileExtension, fileSize));
                 break;
             }
         }

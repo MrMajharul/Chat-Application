@@ -2,13 +2,6 @@ package service;
 
 import app.MessageType;
 import connection.DatabaseConnection;
-import model.Model_File;
-import model.Model_File_Receiver;
-import model.Model_File_Sender;
-import model.Model_Package_Sender;
-import model.Model_Receive_Image;
-import model.Model_Send_Message;
-import swing.blurHash.BlurHash;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -21,6 +14,13 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import javax.imageio.ImageIO;
+import model.Model_File;
+import model.Model_File_Receiver;
+import model.Model_File_Sender;
+import model.Model_Package_Sender;
+import model.Model_Receive_Image;
+import model.Model_Send_Message;
+import swing.blurHash.BlurHash;
 
 public class ServiceFIle {
 
@@ -46,17 +46,21 @@ public class ServiceFIle {
         return data;
     }
 
-    public void updateBlurHashDone(int fileID, String blurhash) throws SQLException {
+    public void updateBlurHashDone(int fileID, String blurhash, int width, int height, long fileSize) throws SQLException {
         PreparedStatement p = con.prepareStatement(UPDATE_BLUR_HASH_DONE);
         p.setString(1, blurhash);
-        p.setInt(2, fileID);
+        p.setInt(2, width);
+        p.setInt(3, height);
+        p.setLong(4, fileSize);
+        p.setInt(5, fileID);
         p.execute();
         p.close();
     }
 
-    public void updateDone(int fileID) throws SQLException {
+    public void updateDone(int fileID, long fileSize) throws SQLException {
         PreparedStatement p = con.prepareStatement(UPDATE_DONE);
-        p.setInt(1, fileID);
+        p.setLong(1, fileSize);
+        p.setInt(2, fileID);
         p.execute();
         p.close();
     }
@@ -66,13 +70,17 @@ public class ServiceFIle {
     }
 
     public Model_File getFile(int fileID) throws SQLException {
-        PreparedStatement p = con.prepareStatement(GET_FILE_EXTENSION);
+        PreparedStatement p = con.prepareStatement(GET_FILE_INFO);
         p.setInt(1, fileID);
         ResultSet r = p.executeQuery();
         Model_File data = null;
         if (r.next()) {
             String fileExtension = r.getString(1);
-            data = new Model_File(fileID, fileExtension);
+            String blurHash = r.getString(2);
+            Integer width = (Integer) r.getObject(3);
+            Integer height = (Integer) r.getObject(4);
+            Long fileSize = (Long) r.getObject(5);
+            data = new Model_File(fileID, fileExtension, blurHash, width, height, fileSize);
         }
         r.close();
         p.close();
@@ -117,9 +125,9 @@ public class ServiceFIle {
             //  So create blurhash image string
             file.getMessage().setText("");
             String blurhash = convertFileToBlurHash(file.getFile(), dataImage);
-            updateBlurHashDone(dataImage.getFileID(), blurhash);
+            updateBlurHashDone(dataImage.getFileID(), blurhash, dataImage.getWidth(), dataImage.getHeight(), file.getFile().length());
         } else {
-            updateDone(dataImage.getFileID());
+            updateDone(dataImage.getFileID(), file.getFile().length());
         }
         fileReceivers.remove(dataImage.getFileID());
         //  Get message to send to target client when file receive finish
@@ -160,9 +168,9 @@ public class ServiceFIle {
     //  SQL
     private final String PATH_FILE = "server_data/";
     private final String INSERT = "insert into files (FileExtension) values (?)";
-    private final String UPDATE_BLUR_HASH_DONE = "update files set BlurHash=?, `Status`='1' where FileID=? limit 1";
-    private final String UPDATE_DONE = "update files set `Status`='1' where FileID=? limit 1";
-    private final String GET_FILE_EXTENSION = "select FileExtension from files where FileID=? limit 1";
+    private final String UPDATE_BLUR_HASH_DONE = "update files set BlurHash=?, Width=?, Height=?, FileSize=?, `Status`='1' where FileID=? limit 1";
+    private final String UPDATE_DONE = "update files set FileSize=?, `Status`='1' where FileID=? limit 1";
+    private final String GET_FILE_INFO = "select FileExtension, BlurHash, Width, Height, FileSize from files where FileID=? limit 1";
     //  Instance
     private final Connection con;
     private final Map<Integer, Model_File_Receiver> fileReceivers;

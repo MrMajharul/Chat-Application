@@ -34,6 +34,38 @@ public class Model_Send_Message {
         this.text = text;
     }
 
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    public Integer getReplyToMessageID() {
+        return replyToMessageID;
+    }
+
+    public void setReplyToMessageID(Integer replyToMessageID) {
+        this.replyToMessageID = replyToMessageID;
+    }
+
+    public String getReplyUserName() {
+        return replyUserName;
+    }
+
+    public void setReplyUserName(String replyUserName) {
+        this.replyUserName = replyUserName;
+    }
+
+    public String getReplyText() {
+        return replyText;
+    }
+
+    public void setReplyText(String replyText) {
+        this.replyText = replyText;
+    }
+
     public Model_Send_Message(int messageType, int fromUserID, int toUserID, String text) {
         this.messageType = messageType;
         this.fromUserID = fromUserID;
@@ -48,4 +80,8 @@ public class Model_Send_Message {
     private int fromUserID;
     private int toUserID;
     private String text;
+    private String clientId;
+    private Integer replyToMessageID;
+    private String replyUserName;
+    private String replyText;
 }

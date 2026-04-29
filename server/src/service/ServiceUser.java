@@ -1,17 +1,18 @@
 package service;
 
 import connection.DatabaseConnection;
-import model.Model_Client;
-import model.Model_Login;
-import model.Model_Message;
-import model.Model_Register;
-import model.Model_User_Account;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import model.Model_Client;
+import model.Model_Login;
+import model.Model_Message;
+import model.Model_Register;
+import model.Model_User_Account;
 
 public class ServiceUser {
 
@@ -109,6 +110,37 @@ public class ServiceUser {
         return list;
     }
 
+    public Model_User_Account updateAvatar(int userID, String imageBase64) throws SQLException {
+        byte[] bytes = null;
+        if (imageBase64 != null && !imageBase64.isEmpty()) {
+            bytes = Base64.getDecoder().decode(imageBase64);
+        }
+        PreparedStatement p = con.prepareStatement(UPDATE_AVATAR);
+        if (bytes == null) {
+            p.setNull(1, java.sql.Types.BLOB);
+            p.setNull(2, java.sql.Types.VARCHAR);
+        } else {
+            p.setBytes(1, bytes);
+            p.setString(2, imageBase64);
+        }
+        p.setInt(3, userID);
+        p.execute();
+        p.close();
+        PreparedStatement p2 = con.prepareStatement(SELECT_USER_BY_ID);
+        p2.setInt(1, userID);
+        ResultSet r = p2.executeQuery();
+        Model_User_Account data = null;
+        if (r.next()) {
+            String userName = r.getString(2);
+            String gender = r.getString(3);
+            String image = r.getString(4);
+            data = new Model_User_Account(userID, userName, gender, image, true);
+        }
+        r.close();
+        p2.close();
+        return data;
+    }
+
     private boolean checkUserStatus(int userID) {
         List<Model_Client> clients = Service.getInstance(null).getListClient();
         for (Model_Client c : clients) {
@@ -122,9 +154,11 @@ public class ServiceUser {
     //  SQL
     private final String LOGIN = "select UserID, user_account.UserName, Gender, ImageString from `user` join user_account using (UserID) where `user`.UserName=BINARY(?) and `user`.`Password`=BINARY(?) and user_account.`Status`='1'";
     private final String SELECT_USER_ACCOUNT = "select UserID, UserName, Gender, ImageString from user_account where user_account.`Status`='1' and UserID<>?";
+    private final String SELECT_USER_BY_ID = "select UserID, UserName, Gender, ImageString from user_account where UserID=?";
     private final String INSERT_USER = "insert into user (UserName, `Password`) values (?,?)";
     private final String INSERT_USER_ACCOUNT = "insert into user_account (UserID, UserName) values (?,?)";
     private final String CHECK_USER = "select UserID from user where UserName =? limit 1";
+    private final String UPDATE_AVATAR = "update user_account set Image=?, ImageString=? where UserID=?";
     //  Instance
     private final Connection con;
 }
