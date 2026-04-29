@@ -15,6 +15,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +35,10 @@ public class Service {
     private Integer currentChatGroupId;
     private final Map<Integer, Integer> unreadUsers = new HashMap<>();
     private final Map<Integer, Integer> unreadGroups = new HashMap<>();
+    private final Map<Integer, String> lastUserPreview = new HashMap<>();
+    private final Map<Integer, String> lastGroupPreview = new HashMap<>();
+    private final Map<Integer, String> lastUserTime = new HashMap<>();
+    private final Map<Integer, String> lastGroupTime = new HashMap<>();
 
     public static Service getInstance() {
         if (instance == null) {
@@ -261,12 +267,14 @@ public class Service {
     private void updateUnreadState(Model_Receive_Message message) {
         if (message.getGroupID() != null) {
             int groupId = message.getGroupID();
+            recordGroupPreview(groupId, buildPreview(message), message.getCreatedAt());
             if (currentChatGroupId == null || currentChatGroupId != groupId) {
                 unreadGroups.put(groupId, getUnreadGroupCount(groupId) + 1);
                 refreshUnreadBadges();
             }
         } else {
             int fromUserId = message.getFromUserID();
+            recordUserPreview(fromUserId, buildPreview(message), message.getCreatedAt());
             if (currentChatUserId == null || currentChatUserId != fromUserId) {
                 unreadUsers.put(fromUserId, getUnreadUserCount(fromUserId) + 1);
                 refreshUnreadBadges();
@@ -278,6 +286,37 @@ public class Service {
         if (PublicEvent.getInstance().getEventMenuLeft() != null) {
             PublicEvent.getInstance().getEventMenuLeft().refreshUnreadBadges();
         }
+    }
+
+    public void recordUserPreview(int userId, String preview, long createdAt) {
+        lastUserPreview.put(userId, preview == null || preview.trim().isEmpty() ? "Message" : preview.trim());
+        lastUserTime.put(userId, formatTime(createdAt));
+    }
+
+    public void recordGroupPreview(int groupId, String preview, long createdAt) {
+        lastGroupPreview.put(groupId, preview == null || preview.trim().isEmpty() ? "Message" : preview.trim());
+        lastGroupTime.put(groupId, formatTime(createdAt));
+    }
+
+    public String getLastUserPreview(int userId) {
+        return lastUserPreview.getOrDefault(userId, "No messages yet");
+    }
+
+    public String getLastGroupPreview(int groupId) {
+        return lastGroupPreview.getOrDefault(groupId, "No messages yet");
+    }
+
+    public String getLastUserTime(int userId) {
+        return lastUserTime.getOrDefault(userId, "");
+    }
+
+    public String getLastGroupTime(int groupId) {
+        return lastGroupTime.getOrDefault(groupId, "");
+    }
+
+    private String formatTime(long createdAt) {
+        long safe = createdAt > 0 ? createdAt : System.currentTimeMillis();
+        return new SimpleDateFormat("hh:mm a").format(new Date(safe));
     }
 
     private void error(Exception e) {

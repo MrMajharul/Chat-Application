@@ -41,9 +41,16 @@ public class Panel_More extends javax.swing.JPanel {
 
     public void setUser(Model_User_Account user) {
         this.user = user;
+        this.groupId = null;
+    }
+
+    public void setGroup(Integer groupId) {
+        this.groupId = groupId;
+        this.user = null;
     }
 
     private Model_User_Account user;
+    private Integer groupId;
 
     public Panel_More() {
         initComponents();
@@ -51,8 +58,8 @@ public class Panel_More extends javax.swing.JPanel {
     }
 
     private void init() {
-        setLayout(new MigLayout("fillx"));
-        setBackground(new java.awt.Color(31, 31, 31));
+        setLayout(new MigLayout("insets 8 8 8 8, fillx", "[fill]", "[]6[fill]"));
+        setBackground(new java.awt.Color(24, 27, 34));
         panelHeader = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -61,26 +68,26 @@ public class Panel_More extends javax.swing.JPanel {
             }
         };
         panelHeader.setOpaque(false);
-        panelHeader.setBackground(new java.awt.Color(31, 31, 31));
+        panelHeader.setBackground(new java.awt.Color(24, 27, 34));
         panelHeader.setLayout(new BoxLayout(panelHeader, BoxLayout.LINE_AXIS));
         panelHeader.add(getButtonAvatar());
         panelHeader.add(getButtonImage());
         panelHeader.add(getButtonFile());
         panelHeader.add(getEmojiStyle1());
         panelHeader.add(getEmojiStyle2());
-        add(panelHeader, "w 100%, h 30!, wrap");
+        add(panelHeader, "w 100%, h 32!, wrap");
         panelDetail = new JPanel();
-        panelDetail.setBackground(new java.awt.Color(31, 31, 31));
+        panelDetail.setBackground(new java.awt.Color(24, 27, 34));
         panelDetail.setLayout(new WrapLayout(WrapLayout.LEFT));
         JScrollPane ch = new JScrollPane(panelDetail);
-        ch.setBackground(new java.awt.Color(31, 31, 31));
-        ch.getViewport().setBackground(new java.awt.Color(31, 31, 31));
+        ch.setBackground(new java.awt.Color(24, 27, 34));
+        ch.getViewport().setBackground(new java.awt.Color(24, 27, 34));
         ch.setBorder(BorderFactory.createEmptyBorder());
         ch.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         ch.getVerticalScrollBar().putClientProperty(FlatClientProperties.STYLE,
                 "" + "width:5;" + "background:null;" + "thumbInsets:0,0,0,0;");
         ch.getVerticalScrollBar().setUnitIncrement(10);
-        add(ch, "w 100%, h 100%");
+        add(ch, "w 100%, h 148!");
         showDefaultStyleEmoji();
     }
 
@@ -117,6 +124,9 @@ public class Panel_More extends javax.swing.JPanel {
                 });
                 int option = ch.showOpenDialog(Main.getFrames()[0]);
                 if (option == JFileChooser.APPROVE_OPTION) {
+                    if (user == null) {
+                        return;
+                    }
                     File files[] = ch.getSelectedFiles();
                     try {
                         for (File file : files) {
@@ -239,7 +249,10 @@ public class Panel_More extends javax.swing.JPanel {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 Model_Send_Message message = new Model_Send_Message(MessageType.EMOJI,
-                        Service.getInstance().getUser().getUserID(), user.getUserID(), data.getId() + "");
+                        Service.getInstance().getUser().getUserID(), resolveTargetId(), data.getId() + "");
+                if (message.getToUserID() <= 0) {
+                    return;
+                }
                 sendMessage(message);
                 PublicEvent.getInstance().getEventChat().sendMessage(message);
             }
@@ -247,20 +260,31 @@ public class Panel_More extends javax.swing.JPanel {
         return cmd;
     }
 
+    private int resolveTargetId() {
+        if (groupId != null) {
+            return groupId;
+        }
+        return user != null ? user.getUserID() : 0;
+    }
+
     private void sendMessage(Model_Send_Message data) {
-        Service.getInstance().getClient().emit("send_to_user", data.toJsonObject());
+        if (groupId != null) {
+            Service.getInstance().getClient().emit("send_to_group", data.toJsonObject());
+        } else {
+            Service.getInstance().getClient().emit("send_to_user", data.toJsonObject());
+        }
     }
 
     @SuppressWarnings("unchecked")
     private void initComponents() {
-        setBackground(new java.awt.Color(31, 31, 31));
+        setBackground(new java.awt.Color(24, 27, 34));
         setForeground(new java.awt.Color(255, 255, 255));
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGap(0, 515, Short.MAX_VALUE));
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGap(0, 320, Short.MAX_VALUE));
         layout.setVerticalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGap(0, 84, Short.MAX_VALUE));
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGap(0, 200, Short.MAX_VALUE));
     }
 
     private void clearSelected() {

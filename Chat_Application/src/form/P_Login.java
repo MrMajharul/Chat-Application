@@ -14,6 +14,8 @@ public class P_Login extends javax.swing.JPanel {
         txtPass.putClientProperty(FlatClientProperties.STYLE, "arc:14;focusWidth:1;innerFocusWidth:0");
         cmdLogin.putClientProperty(FlatClientProperties.STYLE, "arc:14;font:+1 bold");
         cmdRegister.setBorder(javax.swing.BorderFactory.createEmptyBorder(6, 8, 6, 8));
+        txtUser.setToolTipText("Enter your username");
+        txtPass.setToolTipText("Enter your password");
     }
 
     @SuppressWarnings("unchecked")
@@ -29,7 +31,7 @@ public class P_Login extends javax.swing.JPanel {
         cmdLogin = new javax.swing.JButton();
         cmdRegister = new javax.swing.JButton();
 
-        setBackground(new java.awt.Color(31, 31, 31));
+        setBackground(new java.awt.Color(22, 24, 29));
         setPreferredSize(new java.awt.Dimension(300, 336));
 
         lbTitle.setForeground(new java.awt.Color(255, 255, 255));
@@ -39,8 +41,8 @@ public class P_Login extends javax.swing.JPanel {
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("Username");
 
-        txtUser.setBackground(new java.awt.Color(58, 58, 58));
-        txtUser.setForeground(new java.awt.Color(216, 216, 216));
+        txtUser.setBackground(new java.awt.Color(36, 39, 47));
+        txtUser.setForeground(new java.awt.Color(230, 234, 242));
         txtUser.setText("");
         txtUser.setCaretColor(new java.awt.Color(63, 167, 250));
         txtUser.setSelectionColor(new java.awt.Color(63, 167, 250));
@@ -48,12 +50,12 @@ public class P_Login extends javax.swing.JPanel {
         jLabel2.setForeground(new java.awt.Color(255, 255, 255));
         jLabel2.setText("Password");
 
-        txtPass.setBackground(new java.awt.Color(58, 58, 58));
-        txtPass.setForeground(new java.awt.Color(216, 216, 216));
+        txtPass.setBackground(new java.awt.Color(36, 39, 47));
+        txtPass.setForeground(new java.awt.Color(230, 234, 242));
         txtPass.setCaretColor(new java.awt.Color(63, 167, 250));
         txtPass.setSelectionColor(new java.awt.Color(63, 167, 250));
 
-        cmdLogin.setBackground(new java.awt.Color(63, 167, 250));
+        cmdLogin.setBackground(new java.awt.Color(74, 155, 255));
         cmdLogin.setForeground(new java.awt.Color(255, 255, 255));
         cmdLogin.setText("Sign In");
         cmdLogin.addActionListener(new java.awt.event.ActionListener() {
@@ -62,7 +64,7 @@ public class P_Login extends javax.swing.JPanel {
             }
         });
 
-        cmdRegister.setForeground(new java.awt.Color(15, 128, 206));
+        cmdRegister.setForeground(new java.awt.Color(128, 183, 255));
         cmdRegister.setText("Register");
         cmdRegister.setContentAreaFilled(false);
         cmdRegister.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));

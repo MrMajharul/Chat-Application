@@ -13,6 +13,8 @@ import java.nio.file.Files;
 import java.util.Base64;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import javax.swing.Box;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -30,6 +32,8 @@ import io.socket.client.Ack;
 public class Menu_Left extends javax.swing.JPanel {
     private List<Model_User_Account> userAccount;
     private List<model.Model_Group> groupAccount;
+    private Map<Integer, Model_User_Account> userAccountMap;
+    private Map<Integer, model.Model_Group> groupAccountMap;
 
     public Menu_Left() {
         initComponents();
@@ -39,6 +43,9 @@ public class Menu_Left extends javax.swing.JPanel {
     private void init() {
         addHoverEffect(menuMessage);
         addHoverEffect(menuGroup);
+        menuMessage.setToolTipText("Direct messages");
+        menuGroup.setToolTipText("Group chats");
+        jButton1.setToolTipText("Log out");
         sp.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         sp.getVerticalScrollBar().putClientProperty(FlatClientProperties.STYLE,
                 "" + "width:5;" + "background:null;" + "trackArc:$ScrollBar.thumbArc;" + "thumbInsets:0,0,0,0;");
@@ -46,15 +53,17 @@ public class Menu_Left extends javax.swing.JPanel {
         menuList.setLayout(new MigLayout("fillx", "0[fill]0", "0[]0"));
         userAccount = new ArrayList<>();
         groupAccount = new ArrayList<>();
+        userAccountMap = new LinkedHashMap<>();
+        groupAccountMap = new LinkedHashMap<>();
         PublicEvent.getInstance().addEventMenuLeft(new EventMenuLeft() {
             @Override
             public void newUser(List<Model_User_Account> users) {
                 for (Model_User_Account d : users) {
-                    userAccount.add(d);
-                    Item_People item = new Item_People(d);
-                    item.setUnreadCount(Service.getInstance().getUnreadUserCount(d.getUserID()));
-                    menuList.add(item, "wrap");
-                    refreshMenuList();
+                    userAccountMap.put(d.getUserID(), d);
+                }
+                userAccount = new ArrayList<>(userAccountMap.values());
+                if (menuMessage.isSelected()) {
+                    showMessage();
                 }
             }
 
@@ -127,13 +136,11 @@ public class Menu_Left extends javax.swing.JPanel {
             @Override
             public void newGroup(List<model.Model_Group> groups) {
                 for (model.Model_Group g : groups) {
-                    groupAccount.add(g);
-                    if (menuGroup.isSelected()) {
-                        component.Item_Group item = new component.Item_Group(g);
-                        item.setUnreadCount(Service.getInstance().getUnreadGroupCount(g.getGroupID()));
-                        menuList.add(item, "wrap");
-                        refreshMenuList();
-                    }
+                    groupAccountMap.put(g.getGroupID(), g);
+                }
+                groupAccount = new ArrayList<>(groupAccountMap.values());
+                if (menuGroup.isSelected()) {
+                    showGroup();
                 }
             }
 
@@ -157,40 +164,69 @@ public class Menu_Left extends javax.swing.JPanel {
     }
 
     private void initHeaderActions() {
-        JPanel header = new JPanel(new MigLayout("ins 12 12 12 12, fillx", "[grow,fill]12[fill]", "[]4[]"));
-        header.setBackground(new java.awt.Color(24, 26, 31));
-        javax.swing.JLabel title = new javax.swing.JLabel("Chat Studio");
+        JPanel header = new JPanel(new MigLayout("ins 12 12 12 12, fillx", "[grow,fill]8[fill]", "[]6[]"));
+        header.setBackground(new java.awt.Color(22, 24, 29));
+        javax.swing.JLabel title = new javax.swing.JLabel("Chats");
         title.setForeground(new java.awt.Color(255, 255, 255));
-        title.setFont(title.getFont().deriveFont(java.awt.Font.BOLD, 18f));
-        javax.swing.JLabel subtitle = new javax.swing.JLabel("Messages and groups");
-        subtitle.setForeground(new java.awt.Color(160, 165, 175));
+        title.setFont(title.getFont().deriveFont(java.awt.Font.BOLD, 17f));
+        javax.swing.JLabel subtitle = new javax.swing.JLabel("People and groups");
+        subtitle.setForeground(new java.awt.Color(152, 160, 176));
         subtitle.setFont(subtitle.getFont().deriveFont(12f));
         JPanel titleBox = new JPanel(new MigLayout("ins 0, fillx", "[fill]", "[]2[]"));
         titleBox.setOpaque(false);
         titleBox.add(title, "wrap");
         titleBox.add(subtitle);
-        JButton profileButton = new JButton("Edit Profile");
+        JButton profileButton = new JButton("Edit");
         profileButton.setForeground(new java.awt.Color(232, 236, 245));
-        profileButton.setBackground(new java.awt.Color(37, 41, 50));
+        profileButton.setBackground(new java.awt.Color(34, 38, 46));
         profileButton.setFocusPainted(false);
         profileButton.setBorder(javax.swing.BorderFactory.createEmptyBorder(6, 10, 6, 10));
         profileButton.putClientProperty(FlatClientProperties.STYLE, "arc:14");
         profileButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        profileButton.setToolTipText("Update your profile image");
+        profileButton.setToolTipText("Edit profile image");
         profileButton.addActionListener(evt -> updateProfileAvatar());
-        JButton groupButton = new JButton("New Group");
+        JButton groupButton = new JButton("+ Group");
         groupButton.setForeground(new java.awt.Color(232, 236, 245));
-        groupButton.setBackground(new java.awt.Color(37, 41, 50));
+        groupButton.setBackground(new java.awt.Color(34, 38, 46));
         groupButton.setFocusPainted(false);
         groupButton.setBorder(javax.swing.BorderFactory.createEmptyBorder(6, 10, 6, 10));
         groupButton.putClientProperty(FlatClientProperties.STYLE, "arc:14");
         groupButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        groupButton.setToolTipText("Create a new group chat");
+        groupButton.setToolTipText("Create new group");
         groupButton.addActionListener(evt -> createGroup());
+        JPanel profileCard = createProfileCard();
         header.add(titleBox, "growx");
         header.add(profileButton);
         header.add(groupButton, "wrap");
+        header.add(profileCard, "span, growx");
         scrollWrapper.add(header, java.awt.BorderLayout.NORTH);
+    }
+
+    private JPanel createProfileCard() {
+        JPanel card = new JPanel(new MigLayout("ins 8 10 8 10, fillx", "[]8[grow,fill]", "[]2[]"));
+        card.setBackground(new java.awt.Color(30, 34, 42));
+        card.putClientProperty(FlatClientProperties.STYLE, "arc:14");
+        swing.ImageAvatar avatar = new swing.ImageAvatar();
+        avatar.setBorderSize(0);
+        avatar.setPreferredSize(new java.awt.Dimension(32, 32));
+        avatar.setImage(new javax.swing.ImageIcon(getClass().getResource("/images/user.png")));
+        Model_User_Account me = Service.getInstance().getUser();
+        if (me != null && me.getImage() != null && !me.getImage().isEmpty()) {
+            try {
+                avatar.setImage(new ImageIcon(Base64.getDecoder().decode(me.getImage())));
+            } catch (Exception ignore) {
+            }
+        }
+        javax.swing.JLabel name = new javax.swing.JLabel(me != null ? me.getUserName() : "You");
+        name.setForeground(new java.awt.Color(235, 240, 250));
+        name.putClientProperty(FlatClientProperties.STYLE, "font:+0 bold");
+        javax.swing.JLabel status = new javax.swing.JLabel("Online");
+        status.setForeground(new java.awt.Color(126, 208, 147));
+        status.putClientProperty(FlatClientProperties.STYLE, "font:-1");
+        card.add(avatar, "spany 2");
+        card.add(name, "wrap");
+        card.add(status);
+        return card;
     }
 
     private void createGroup() {
@@ -271,6 +307,8 @@ public class Menu_Left extends javax.swing.JPanel {
         for (Model_User_Account d : userAccount) {
             Item_People item = new Item_People(d);
             item.setUnreadCount(Service.getInstance().getUnreadUserCount(d.getUserID()));
+            item.setPreview(Service.getInstance().getLastUserPreview(d.getUserID()));
+            item.setLastTime(Service.getInstance().getLastUserTime(d.getUserID()));
             menuList.add(item, "wrap");
         }
         applySelectionState();
@@ -282,6 +320,8 @@ public class Menu_Left extends javax.swing.JPanel {
         for (model.Model_Group g : groupAccount) {
             component.Item_Group item = new component.Item_Group(g);
             item.setUnreadCount(Service.getInstance().getUnreadGroupCount(g.getGroupID()));
+            item.setPreview(Service.getInstance().getLastGroupPreview(g.getGroupID()));
+            item.setLastTime(Service.getInstance().getLastGroupTime(g.getGroupID()));
             menuList.add(item, "wrap");
         }
         applySelectionState();
@@ -320,7 +360,7 @@ public class Menu_Left extends javax.swing.JPanel {
         comp.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                comp.setBackground(new java.awt.Color(58, 58, 58));
+                comp.setBackground(new java.awt.Color(42, 47, 58));
                 comp.setOpaque(true);
                 comp.repaint();
             }
@@ -343,8 +383,8 @@ public class Menu_Left extends javax.swing.JPanel {
         sp = new javax.swing.JScrollPane();
         menuList = new javax.swing.JPanel();
         scrollWrapper = new swing.RoundedPanel(20);
-        setBackground(new java.awt.Color(18, 20, 24));
-        menu.setBackground(new java.awt.Color(24, 26, 31));
+        setBackground(new java.awt.Color(16, 18, 22));
+        menu.setBackground(new java.awt.Color(22, 24, 29));
         menu.setOpaque(true);
         menu.setLayout(new javax.swing.BoxLayout(menu, javax.swing.BoxLayout.Y_AXIS));
         menuMessage.setIconSelected(new javax.swing.ImageIcon(getClass().getResource("/images/icon-chat-active.png")));
@@ -388,10 +428,10 @@ public class Menu_Left extends javax.swing.JPanel {
         sp.setBorder(null);
         sp.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         sp.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        menuList.setBackground(new java.awt.Color(24, 26, 31));
+        menuList.setBackground(new java.awt.Color(22, 24, 29));
         menuList.setLayout(new net.miginfocom.swing.MigLayout("fillx, wrap", "[fill]", "[]"));
         sp.setViewportView(menuList);
-        scrollWrapper.setBackground(new java.awt.Color(24, 26, 31));
+        scrollWrapper.setBackground(new java.awt.Color(22, 24, 29));
         scrollWrapper.setLayout(new java.awt.BorderLayout());
         scrollWrapper.add(sp, java.awt.BorderLayout.CENTER);
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -413,8 +453,12 @@ public class Menu_Left extends javax.swing.JPanel {
     }
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {
-        SwingUtilities.getWindowAncestor(this).dispose();
-        new main.Main().setVisible(true);
+        int confirm = JOptionPane.showConfirmDialog(this, "Log out from this session?", "Confirm Logout",
+                JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            SwingUtilities.getWindowAncestor(this).dispose();
+            new main.Main().setVisible(true);
+        }
     }
 
     private void menuMessageActionPerformed(java.awt.event.ActionEvent evt) {

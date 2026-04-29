@@ -18,6 +18,9 @@ public class P_Register extends javax.swing.JPanel {
         txtRePassword.putClientProperty(FlatClientProperties.STYLE, "arc:14;focusWidth:1;innerFocusWidth:0");
         cmdRegister.putClientProperty(FlatClientProperties.STYLE, "arc:14;font:+1 bold");
         cmdBackLogin.setBorder(javax.swing.BorderFactory.createEmptyBorder(6, 8, 6, 8));
+        txtUser.setToolTipText("Choose a username");
+        txtPass.setToolTipText("Create a password");
+        txtRePassword.setToolTipText("Repeat the password");
     }
 
     @SuppressWarnings("unchecked")
@@ -35,7 +38,7 @@ public class P_Register extends javax.swing.JPanel {
         jLabel3 = new javax.swing.JLabel();
         lbError = new javax.swing.JLabel();
 
-        setBackground(new java.awt.Color(31, 31, 31));
+        setBackground(new java.awt.Color(22, 24, 29));
         setPreferredSize(new java.awt.Dimension(300, 354));
 
         lbTitle.setForeground(new java.awt.Color(255, 255, 255));
@@ -45,8 +48,8 @@ public class P_Register extends javax.swing.JPanel {
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("User Name");
 
-        txtUser.setBackground(new java.awt.Color(62, 62, 62));
-        txtUser.setForeground(new java.awt.Color(216, 216, 216));
+        txtUser.setBackground(new java.awt.Color(36, 39, 47));
+        txtUser.setForeground(new java.awt.Color(230, 234, 242));
         txtUser.setSelectionColor(new java.awt.Color(63, 167, 250));
         txtUser.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -57,8 +60,8 @@ public class P_Register extends javax.swing.JPanel {
         jLabel2.setForeground(new java.awt.Color(255, 255, 255));
         jLabel2.setText("Password");
 
-        txtPass.setBackground(new java.awt.Color(62, 62, 62));
-        txtPass.setForeground(new java.awt.Color(216, 216, 216));
+        txtPass.setBackground(new java.awt.Color(36, 39, 47));
+        txtPass.setForeground(new java.awt.Color(230, 234, 242));
         txtPass.setSelectionColor(new java.awt.Color(63, 167, 250));
         txtPass.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -66,7 +69,7 @@ public class P_Register extends javax.swing.JPanel {
             }
         });
 
-        cmdRegister.setBackground(new java.awt.Color(63, 167, 250));
+        cmdRegister.setBackground(new java.awt.Color(74, 155, 255));
         cmdRegister.setForeground(new java.awt.Color(255, 255, 255));
         cmdRegister.setText("Sign Up");
         cmdRegister.addActionListener(new java.awt.event.ActionListener() {
@@ -75,7 +78,7 @@ public class P_Register extends javax.swing.JPanel {
             }
         });
 
-        cmdBackLogin.setForeground(new java.awt.Color(15, 128, 206));
+        cmdBackLogin.setForeground(new java.awt.Color(128, 183, 255));
         cmdBackLogin.setText("Back to Login");
         cmdBackLogin.setContentAreaFilled(false);
         cmdBackLogin.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -85,8 +88,8 @@ public class P_Register extends javax.swing.JPanel {
             }
         });
 
-        txtRePassword.setBackground(new java.awt.Color(62, 62, 62));
-        txtRePassword.setForeground(new java.awt.Color(216, 216, 216));
+        txtRePassword.setBackground(new java.awt.Color(36, 39, 47));
+        txtRePassword.setForeground(new java.awt.Color(230, 234, 242));
         txtRePassword.setSelectionColor(new java.awt.Color(63, 167, 250));
 
         jLabel3.setForeground(new java.awt.Color(255, 255, 255));

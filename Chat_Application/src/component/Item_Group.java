@@ -82,17 +82,33 @@ public class Item_Group extends swing.RoundedPanel {
         }
     }
 
+    public void setPreview(String preview) {
+        lbStatus.setText(compactPreview(preview));
+    }
+
+    public void setLastTime(String time) {
+        lbTime.setText(time == null ? "" : time);
+    }
+
+    private String compactPreview(String preview) {
+        if (preview == null || preview.trim().isEmpty()) {
+            return "No messages yet";
+        }
+        String value = preview.trim();
+        return value.length() > 24 ? value.substring(0, 24) + "..." : value;
+    }
+
     private void applyStateColor() {
         if (selectedItem) {
-            setBackground(new Color(34, 74, 120));
+            setBackground(new Color(35, 69, 108));
             lb.setForeground(new Color(245, 248, 255));
             lbStatus.setForeground(new Color(212, 224, 245));
         } else if (mouseOver) {
-            setBackground(new Color(46, 52, 66));
+            setBackground(new Color(38, 43, 53));
             lb.setForeground(new Color(255, 255, 255));
             lbStatus.setForeground(new Color(191, 198, 214));
         } else {
-            setBackground(new Color(24, 26, 31));
+            setBackground(new Color(22, 24, 29));
             lb.setForeground(new Color(239, 242, 249));
             lbStatus.setForeground(new Color(163, 170, 186));
         }
@@ -115,8 +131,9 @@ public class Item_Group extends swing.RoundedPanel {
         lb = new javax.swing.JLabel();
         lbStatus = new javax.swing.JLabel();
         unreadBadge = new javax.swing.JLabel();
+        lbTime = new javax.swing.JLabel();
 
-        setBackground(new java.awt.Color(24, 26, 31));
+        setBackground(new java.awt.Color(22, 24, 29));
 
         imageAvatar1.setBorderSize(0);
         imageAvatar1.setImage(new javax.swing.ImageIcon(getClass().getResource("/images/group.png"))); // NOI18N
@@ -138,7 +155,12 @@ public class Item_Group extends swing.RoundedPanel {
         lbStatus.setForeground(new java.awt.Color(163, 170, 186));
         lbStatus.setText("Group Chat");
 
-        unreadBadge.setBackground(new java.awt.Color(92, 167, 255));
+        lbTime.setForeground(new java.awt.Color(138, 146, 163));
+        lbTime.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lbTime.setText("");
+        lbTime.putClientProperty(FlatClientProperties.STYLE, "font:-2");
+
+        unreadBadge.setBackground(new java.awt.Color(83, 153, 247));
         unreadBadge.setForeground(new java.awt.Color(255, 255, 255));
         unreadBadge.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         unreadBadge.setText("1");
@@ -158,6 +180,8 @@ public class Item_Group extends swing.RoundedPanel {
                     .addComponent(lb, javax.swing.GroupLayout.DEFAULT_SIZE, 155, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lbStatus)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lbTime, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(unreadBadge, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
@@ -171,6 +195,7 @@ public class Item_Group extends swing.RoundedPanel {
                         .addComponent(lb)
                         .addGap(6, 6, 6)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lbTime, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(lbStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(unreadBadge, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addComponent(imageAvatar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -181,5 +206,6 @@ public class Item_Group extends swing.RoundedPanel {
     private swing.ImageAvatar imageAvatar1;
     private javax.swing.JLabel lb;
     private javax.swing.JLabel lbStatus;
+    private javax.swing.JLabel lbTime;
     private javax.swing.JLabel unreadBadge;
 }

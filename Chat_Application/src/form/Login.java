@@ -25,10 +25,10 @@ public class Login extends javax.swing.JPanel {
                 P_Login login = new P_Login();
                 P_Register register = new P_Register();
                 slide.showSlid(login, PanelSlider.SliderType.NONE);
-                pic.putClientProperty(FlatClientProperties.STYLE, "arc:24");
-                jPanel1.putClientProperty(FlatClientProperties.STYLE, "arc:24");
-                jPanel2.putClientProperty(FlatClientProperties.STYLE, "arc:20");
-                slide.putClientProperty(FlatClientProperties.STYLE, "arc:20");
+                pic.putClientProperty(FlatClientProperties.STYLE, "arc:20");
+                jPanel1.putClientProperty(FlatClientProperties.STYLE, "arc:20");
+                jPanel2.putClientProperty(FlatClientProperties.STYLE, "arc:16");
+                slide.putClientProperty(FlatClientProperties.STYLE, "arc:16");
 
                 PublicEvent.getInstance().addEventLogin(new EventLogin() {
 
@@ -114,7 +114,7 @@ public class Login extends javax.swing.JPanel {
                 jPanel2 = new RoundedPanel(30);
                 slide = new swing.PanelSlider();
 
-                setBackground(new java.awt.Color(18, 20, 24));
+                setBackground(new java.awt.Color(16, 18, 22));
 
                 pic.setImage(new javax.swing.ImageIcon(getClass().getResource("/images/icon-transparent.png"))); // NOI18N
 
@@ -127,11 +127,11 @@ public class Login extends javax.swing.JPanel {
                                 picLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                                 .addGap(0, 242, Short.MAX_VALUE));
 
-                jPanel1.setBackground(new java.awt.Color(24, 26, 31));
+                jPanel1.setBackground(new java.awt.Color(22, 24, 29));
 
-                jPanel2.setBackground(new java.awt.Color(24, 26, 31));
+                jPanel2.setBackground(new java.awt.Color(22, 24, 29));
 
-                slide.setBackground(new java.awt.Color(24, 26, 31));
+                slide.setBackground(new java.awt.Color(22, 24, 29));
 
                 javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
                 jPanel2.setLayout(jPanel2Layout);

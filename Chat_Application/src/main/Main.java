@@ -170,10 +170,14 @@ public class Main extends javax.swing.JFrame {
         FlatRobotoFont.install();
         FlatLaf.registerCustomDefaultsSource("themes");
         UIManager.put("defaultFont", new Font(FlatRobotoFont.FAMILY, Font.PLAIN, 13));
-        UIManager.put("Panel.background", new java.awt.Color(18, 20, 24));
-        UIManager.put("Component.arc", 18);
-        UIManager.put("Button.arc", 18);
-        UIManager.put("TextComponent.arc", 18);
+        UIManager.put("Panel.background", new java.awt.Color(16, 18, 22));
+        UIManager.put("Component.arc", 14);
+        UIManager.put("Button.arc", 14);
+        UIManager.put("TextComponent.arc", 12);
+        UIManager.put("Button.focusWidth", 0);
+        UIManager.put("Component.focusWidth", 1);
+        UIManager.put("Component.innerFocusWidth", 0);
+        UIManager.put("ScrollBar.width", 8);
         UIManager.put("ScrollBar.thumbArc", 999);
         UIManager.put("ScrollBar.trackArc", 999);
         FlatMacDarkLaf.setup();

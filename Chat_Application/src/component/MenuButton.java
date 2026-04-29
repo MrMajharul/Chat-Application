@@ -44,10 +44,10 @@ public class MenuButton extends JButton {
     protected void paintComponent(Graphics grphcs) {
         super.paintComponent(grphcs);
         if (isSelected()) {
-            grphcs.setColor(new Color(110, 213, 255));
-            int lineWidth = 10;
+            grphcs.setColor(new Color(96, 170, 255));
+            int lineWidth = 14;
             int x = (getWidth() - lineWidth) / 2;
-            grphcs.fillRect(x, getHeight() - 3, lineWidth, 3);
+            grphcs.fillRoundRect(x, getHeight() - 4, lineWidth, 2, 2, 2);
         }
     }
 }

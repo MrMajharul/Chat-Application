@@ -47,6 +47,12 @@ public class Chat_Left extends javax.swing.JLayeredPane {
         txt.setReply(false, userName, text);
     }
 
+    public void setSender(String sender) {
+        if (sender != null && !sender.trim().isEmpty()) {
+            txt.setUserProfile(sender);
+        }
+    }
+
     public Chat_Item getChatItem() {
         return txt;
     }

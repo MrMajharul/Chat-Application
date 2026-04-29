@@ -14,7 +14,7 @@ public class Home extends javax.swing.JLayeredPane {
 
     private void init() {
         setLayout(new MigLayout("fillx, filly", "0[320!]0[fill, 100%]0", "0[fill]0"));
-        setBackground(new java.awt.Color(18, 20, 24));
+        setBackground(new java.awt.Color(16, 18, 22));
         this.add(new Menu_Left(), "cell 0 0, grow");
         chat = new Chat();
         this.add(chat, "cell 1 0, grow");

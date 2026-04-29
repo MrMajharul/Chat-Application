@@ -34,8 +34,8 @@ public class Chat_Body extends javax.swing.JPanel {
     }
 
     private void init() {
-        body.setLayout(new MigLayout("fillx", "", "5[bottom]5"));
-        body.setBackground(new Color(24, 26, 31));
+        body.setLayout(new MigLayout("insets 12 16 12 16, fillx", "[fill]", "6[bottom]6"));
+        body.setBackground(new Color(22, 24, 29));
         showEmptyState("Select a chat to start messaging", "Pick a user or group from the left panel.");
         sp.getVerticalScrollBar().putClientProperty(FlatClientProperties.STYLE, ""
                 + "width:5;"
@@ -46,43 +46,55 @@ public class Chat_Body extends javax.swing.JPanel {
     }
 
     public javax.swing.JComponent addItemLeft(Model_Receive_Message data) {
+        return addItemLeft(data, null);
+    }
+
+    public javax.swing.JComponent addItemLeft(Model_Receive_Message data, String senderName) {
         clearEmptyState();
         if (data.getMessageType() == MessageType.TEXT) {
             Chat_Left item = new Chat_Left();
+            item.setSender(senderName);
             item.setText(data.getText());
             applyReply(item, data);
             String time = formatTime(data.getCreatedAt());
             item.setTime(time);
-            body.add(item, "wrap, w 100::80%");
+            body.add(item, "wrap, w 100::68%");
+            scrollToBottom();
             registerMessage(item.getChatItem(), data.getMessageID(), time);
             return item;
         } else if (data.getMessageType() == MessageType.EMOJI) {
             Chat_Left item = new Chat_Left();
+            item.setSender(senderName);
             item.setEmoji(Emogi.getInstance().getImoji(Integer.valueOf(data.getText())).getIcon());
             applyReply(item, data);
             String time = formatTime(data.getCreatedAt());
             item.setTime(time);
-            body.add(item, "wrap, w 100::80%");
+            body.add(item, "wrap, w 100::68%");
+            scrollToBottom();
             registerMessage(item.getChatItem(), data.getMessageID(), time);
             return item;
         } else if (data.getMessageType() == MessageType.FILE) {
             Chat_Left item = new Chat_Left();
+            item.setSender(senderName);
             String fileName = buildFileName(data);
             String sizeText = formatFileSize(data.getFileSize());
             item.setFile(fileName, sizeText);
             applyReply(item, data);
             String time = formatTime(data.getCreatedAt());
             item.setTime(time);
-            body.add(item, "wrap, w 100::80%");
+            body.add(item, "wrap, w 100::68%");
+            scrollToBottom();
             registerMessage(item.getChatItem(), data.getMessageID(), time);
             return item;
         } else if (data.getMessageType() == MessageType.IMAGE) {
             Chat_Left item = new Chat_Left();
+            item.setSender(senderName);
             item.setText("");
             item.setImage(data.getDataImage());
             String time = formatTime(data.getCreatedAt());
             item.setTime(time);
-            body.add(item, "wrap, w 100::80%");
+            body.add(item, "wrap, w 100::68%");
+            scrollToBottom();
             registerMessage(item.getChatItem(), data.getMessageID(), time);
             return item;
         }
@@ -98,7 +110,7 @@ public class Chat_Body extends javax.swing.JPanel {
         item.setImage(image);
         item.setTime();
         item.setUserProfile(user);
-        body.add(item, "wrap, w 100::80%");
+        body.add(item, "wrap, w 100::68%");
         //  ::80% set max with 80%
         body.repaint();
         body.revalidate();
@@ -111,7 +123,7 @@ public class Chat_Body extends javax.swing.JPanel {
         item.setFile(fileName, fileSize);
         item.setTime();
         item.setUserProfile(user);
-        body.add(item, "wrap, w 100::80%");
+        body.add(item, "wrap, w 100::68%");
         //  ::80% set max with 80%
         body.repaint();
         body.revalidate();
@@ -127,7 +139,8 @@ public class Chat_Body extends javax.swing.JPanel {
             }
             String time = formatTime(System.currentTimeMillis());
             item.setStatus(0, time);
-            body.add(item, "wrap, al right, w 100::80%");
+            body.add(item, "wrap, al right, w 100::68%");
+            scrollToBottom();
             registerPending(data.getClientId(), item.getChatItem());
             return item;
         } else if (data.getMessageType() == MessageType.EMOJI) {
@@ -138,7 +151,8 @@ public class Chat_Body extends javax.swing.JPanel {
             }
             String time = formatTime(System.currentTimeMillis());
             item.setStatus(0, time);
-            body.add(item, "wrap, al right, w 100::80%");
+            body.add(item, "wrap, al right, w 100::68%");
+            scrollToBottom();
             registerPending(data.getClientId(), item.getChatItem());
             return item;
         } else if (data.getMessageType() == MessageType.IMAGE) {
@@ -147,7 +161,8 @@ public class Chat_Body extends javax.swing.JPanel {
             item.setImage(data.getFile());
             String time = formatTime(System.currentTimeMillis());
             item.setStatus(0, time);
-            body.add(item, "wrap, al right, w 100::80%");
+            body.add(item, "wrap, al right, w 100::68%");
+            scrollToBottom();
             registerPending(data.getClientId(), item.getChatItem());
             return item;
 
@@ -168,7 +183,7 @@ public class Chat_Body extends javax.swing.JPanel {
             }
             String time = formatTime(data.getCreatedAt());
             item.setStatus(data.getStatus(), time);
-            body.add(item, "wrap, al right, w 100::80%");
+            body.add(item, "wrap, al right, w 100::68%");
             registerMessage(item.getChatItem(), data.getMessageID(), time);
             return item;
         } else if (data.getMessageType() == MessageType.EMOJI) {
@@ -179,7 +194,7 @@ public class Chat_Body extends javax.swing.JPanel {
             }
             String time = formatTime(data.getCreatedAt());
             item.setStatus(data.getStatus(), time);
-            body.add(item, "wrap, al right, w 100::80%");
+            body.add(item, "wrap, al right, w 100::68%");
             registerMessage(item.getChatItem(), data.getMessageID(), time);
             return item;
         } else if (data.getMessageType() == MessageType.IMAGE) {
@@ -188,7 +203,7 @@ public class Chat_Body extends javax.swing.JPanel {
             item.setImage(data.getDataImage());
             String time = formatTime(data.getCreatedAt());
             item.setStatus(data.getStatus(), time);
-            body.add(item, "wrap, al right, w 100::80%");
+            body.add(item, "wrap, al right, w 100::68%");
             registerMessage(item.getChatItem(), data.getMessageID(), time);
             return item;
         } else if (data.getMessageType() == MessageType.FILE) {
@@ -201,7 +216,7 @@ public class Chat_Body extends javax.swing.JPanel {
             }
             String time = formatTime(data.getCreatedAt());
             item.setStatus(data.getStatus(), time);
-            body.add(item, "wrap, al right, w 100::80%");
+            body.add(item, "wrap, al right, w 100::68%");
             registerMessage(item.getChatItem(), data.getMessageID(), time);
             return item;
         }
@@ -236,7 +251,7 @@ public class Chat_Body extends javax.swing.JPanel {
         Chat_Right item = new Chat_Right();
         item.setText(text);
         item.setFile(fileName, fileSize);
-        body.add(item, "wrap, al right, w 100::80%");
+        body.add(item, "wrap, al right, w 100::68%");
         //  ::80% set max with 80%
         body.repaint();
         body.revalidate();
@@ -256,6 +271,22 @@ public class Chat_Body extends javax.swing.JPanel {
         messageMap.clear();
         pendingMap.clear();
         itemTimeMap.clear();
+        showEmptyState("No chat selected", "Choose a conversation from the left to start.");
+        repaint();
+        revalidate();
+    }
+
+    public void showLoadingState() {
+        body.removeAll();
+        clearEmptyState();
+        showEmptyState("Loading messages...", "Please wait while we fetch this conversation.");
+        repaint();
+        revalidate();
+    }
+
+    public void showConversationEmptyState() {
+        body.removeAll();
+        clearEmptyState();
         showEmptyState("No messages yet", "Send the first message to start the conversation.");
         repaint();
         revalidate();

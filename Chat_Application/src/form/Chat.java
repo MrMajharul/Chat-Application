@@ -33,7 +33,7 @@ public class Chat extends javax.swing.JPanel {
 
     private void init() {
         setLayout(new MigLayout("fillx, filly", "0[fill]0", "0[]0[100%, fill]0[shrink 0]0"));
-        setBackground(new java.awt.Color(24, 26, 31));
+        setBackground(new java.awt.Color(22, 24, 29));
         chatTitle = new Chat_Title();
         chatBody = new Chat_Body();
         chatBottom = new Chat_Bottom();
@@ -46,7 +46,14 @@ public class Chat extends javax.swing.JPanel {
 
             @Override
             public void receiveMessage(Model_Receive_Message data) {
-                if (chatTitle.getUser().getUserID() == data.getFromUserID()) {
+                Integer activeGroup = Service.getInstance().getCurrentChatGroupId();
+                Integer incomingGroup = data.getGroupID();
+                if (incomingGroup != null && activeGroup != null && activeGroup.intValue() == incomingGroup.intValue()) {
+                    if (data.getFromUserID() != Service.getInstance().getUser().getUserID()) {
+                        JComponent comp = chatBody.addItemLeft(data, resolveSenderName(data.getFromUserID()));
+                        attachMenu(comp, data, false);
+                    }
+                } else if (chatTitle.getUser() != null && chatTitle.getUser().getUserID() == data.getFromUserID()) {
                     JComponent comp = chatBody.addItemLeft(data);
                     attachMenu(comp, data, false);
                 }
@@ -54,7 +61,8 @@ public class Chat extends javax.swing.JPanel {
                     Service.getInstance().getClient().emit("message_delivered",
                             new Model_Message_Status(data.getMessageID(), data.getFromUserID(),
                                     Service.getInstance().getUser().getUserID(), 1).toJsonObject());
-                    if (chatTitle.getUser().getUserID() == data.getFromUserID()) {
+                    if ((incomingGroup != null && activeGroup != null && activeGroup.intValue() == incomingGroup.intValue())
+                            || (chatTitle.getUser() != null && chatTitle.getUser().getUserID() == data.getFromUserID())) {
                         Service.getInstance().getClient().emit("message_seen",
                                 new Model_Message_Status(data.getMessageID(), data.getFromUserID(),
                                         Service.getInstance().getUser().getUserID(), 2).toJsonObject());
@@ -80,7 +88,7 @@ public class Chat extends javax.swing.JPanel {
     public void setUser(Model_User_Account user) {
         chatTitle.setUserName(user);
         chatBottom.setUser(user);
-        chatBody.clearChat();
+        chatBody.showLoadingState();
         Service.getInstance().setCurrentChatUserId(user.getUserID());
         Service.getInstance().setCurrentChatGroupId(null);
         Service.getInstance().clearUnreadUser(user.getUserID());
@@ -96,9 +104,11 @@ public class Chat extends javax.swing.JPanel {
                 @Override
                 public void call(Object... os) {
                     if (os == null || os.length == 0) {
+                        chatBody.showConversationEmptyState();
                         return;
                     }
                     int lastFromMessageId = 0;
+                    int loaded = 0;
                     for (Object o : os) {
                         try {
                             Model_Receive_Message ms = new Model_Receive_Message(o);
@@ -112,9 +122,14 @@ public class Chat extends javax.swing.JPanel {
                                     lastFromMessageId = ms.getMessageID();
                                 }
                             }
+                            Service.getInstance().recordUserPreview(user.getUserID(), ms.getText(), ms.getCreatedAt());
+                            loaded++;
                         } catch (Exception e) {
                             // ignore malformed history item
                         }
+                    }
+                    if (loaded == 0) {
+                        chatBody.showConversationEmptyState();
                     }
                     chatBody.scrollToBottomNow();
                     if (lastFromMessageId > 0) {
@@ -127,9 +142,8 @@ public class Chat extends javax.swing.JPanel {
     }
 
     public void setGroup(model.Model_Group group) {
-        chatTitle.setGroupName(group.getGroupName());
-        // Chat_Bottom will be updated to support group mode
-        chatBody.clearChat();
+        chatTitle.setGroupName(group.getGroupName(), "Group ID: " + group.getGroupID());
+        chatBody.showLoadingState();
         chatBottom.setUser(null);
         chatBottom.setGroup(group);
         Service.getInstance().setCurrentChatUserId(null);
@@ -138,6 +152,40 @@ public class Chat extends javax.swing.JPanel {
         EventMenuLeft menuLeft = PublicEvent.getInstance().getEventMenuLeft();
         if (menuLeft != null) {
             menuLeft.refreshUnreadBadges();
+        }
+        Model_User_Account currentUser = Service.getInstance().getUser();
+        if (currentUser != null) {
+            Model_History req = new Model_History(currentUser.getUserID(), group.getGroupID(), 80);
+            Service.getInstance().getClient().emit("load_group_history", req.toJsonObject(), new Ack() {
+                @Override
+                public void call(Object... os) {
+                    if (os == null || os.length == 0) {
+                        chatBody.showConversationEmptyState();
+                        return;
+                    }
+                    int loaded = 0;
+                    for (Object o : os) {
+                        try {
+                            Model_Receive_Message ms = new Model_Receive_Message(o);
+                            ms.setGroupID(group.getGroupID());
+                            if (ms.getFromUserID() == currentUser.getUserID()) {
+                                JComponent comp = chatBody.addHistoryRight(ms);
+                                attachMenu(comp, ms, true);
+                            } else {
+                                JComponent comp = chatBody.addItemLeft(ms, resolveSenderName(ms.getFromUserID()));
+                                attachMenu(comp, ms, false);
+                            }
+                            Service.getInstance().recordGroupPreview(group.getGroupID(), ms.getText(), ms.getCreatedAt());
+                            loaded++;
+                        } catch (Exception ignore) {
+                        }
+                    }
+                    if (loaded == 0) {
+                        chatBody.showConversationEmptyState();
+                    }
+                    chatBody.scrollToBottomNow();
+                }
+            });
         }
     }
 
@@ -160,7 +208,7 @@ public class Chat extends javax.swing.JPanel {
         if (comp == null) {
             return;
         }
-        String fromName = isRight ? Service.getInstance().getUser().getUserName() : chatTitle.getUser().getUserName();
+        String fromName = isRight ? Service.getInstance().getUser().getUserName() : resolveSenderName(data.getFromUserID());
         JPopupMenu menu = new JPopupMenu();
         JMenuItem reply = new JMenuItem("Reply");
         reply.addActionListener(e -> chatBottom.setReply(fromName, data.getText(), data.getMessageID()));
@@ -195,9 +243,21 @@ public class Chat extends javax.swing.JPanel {
         chatTitle.updateUser(user);
     }
 
+    private String resolveSenderName(int userId) {
+        EventMenuLeft menuLeft = PublicEvent.getInstance().getEventMenuLeft();
+        if (menuLeft != null && menuLeft.getUserList() != null) {
+            for (Model_User_Account u : menuLeft.getUserList()) {
+                if (u.getUserID() == userId) {
+                    return u.getUserName();
+                }
+            }
+        }
+        return "User " + userId;
+    }
+
     @SuppressWarnings("unchecked")
     private void initComponents() {
-        setBackground(new java.awt.Color(24, 26, 31));
+        setBackground(new java.awt.Color(22, 24, 29));
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(

@@ -62,6 +62,22 @@ public class Item_People extends swing.RoundedPanel {
                 }
         }
 
+        public void setPreview(String preview) {
+                lbStatus.setText(compactPreview(preview));
+        }
+
+        public void setLastTime(String time) {
+                lbTime.setText(time == null ? "" : time);
+        }
+
+        private String compactPreview(String preview) {
+                if (preview == null || preview.trim().isEmpty()) {
+                        return "No messages yet";
+                }
+                String value = preview.trim();
+                return value.length() > 24 ? value.substring(0, 24) + "..." : value;
+        }
+
         private void updateAvatar() {
                 if (user.getImage() != null && !user.getImage().isEmpty()) {
                         try {
@@ -109,15 +125,15 @@ public class Item_People extends swing.RoundedPanel {
 
         private void applyStateColor() {
                 if (selectedItem) {
-                        setBackground(new Color(34, 74, 120));
+                        setBackground(new Color(35, 69, 108));
                         lb.setForeground(new Color(245, 248, 255));
                         lbStatus.setForeground(new Color(212, 224, 245));
                 } else if (mouseOver) {
-                        setBackground(new Color(46, 52, 66));
+                        setBackground(new Color(38, 43, 53));
                         lb.setForeground(new Color(255, 255, 255));
                         lbStatus.setForeground(new Color(191, 198, 214));
                 } else {
-                        setBackground(new Color(24, 26, 31));
+                        setBackground(new Color(22, 24, 29));
                         lb.setForeground(new Color(239, 242, 249));
                         lbStatus.setForeground(new Color(163, 170, 186));
                 }
@@ -144,8 +160,9 @@ public class Item_People extends swing.RoundedPanel {
         lbStatus = new javax.swing.JLabel();
         activeStatus = new swing.ActiveStatus();
         unreadBadge = new javax.swing.JLabel();
+        lbTime = new javax.swing.JLabel();
 
-        setBackground(new java.awt.Color(24, 26, 31));
+        setBackground(new java.awt.Color(22, 24, 29));
 
         imageAvatar1.setBorderSize(0);
         imageAvatar1.setImage(new javax.swing.ImageIcon(getClass().getResource("/images/user.png"))); // NOI18N
@@ -167,9 +184,14 @@ public class Item_People extends swing.RoundedPanel {
         lbStatus.setForeground(new java.awt.Color(163, 170, 186));
         lbStatus.setText("New User");
 
+        lbTime.setForeground(new java.awt.Color(138, 146, 163));
+        lbTime.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lbTime.setText("");
+        lbTime.putClientProperty(FlatClientProperties.STYLE, "font:-2");
+
         activeStatus.setActive(true);
 
-        unreadBadge.setBackground(new java.awt.Color(92, 167, 255));
+        unreadBadge.setBackground(new java.awt.Color(83, 153, 247));
         unreadBadge.setForeground(new java.awt.Color(255, 255, 255));
         unreadBadge.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         unreadBadge.setText("1");
@@ -191,7 +213,9 @@ public class Item_People extends swing.RoundedPanel {
                         .addComponent(lbStatus)
                         .addGap(3, 3, 3)
                         .addComponent(activeStatus, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(lbTime, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(unreadBadge, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
@@ -207,6 +231,7 @@ public class Item_People extends swing.RoundedPanel {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                                         .addComponent(activeStatus, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                                         .addComponent(lbStatus, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                        .addComponent(lbTime, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                                         .addComponent(unreadBadge, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addComponent(imageAvatar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(5, 5, 5))
@@ -218,6 +243,7 @@ public class Item_People extends swing.RoundedPanel {
     private swing.ImageAvatar imageAvatar1;
     private javax.swing.JLabel lb;
     private javax.swing.JLabel lbStatus;
-        private javax.swing.JLabel unreadBadge;
+    private javax.swing.JLabel lbTime;
+    private javax.swing.JLabel unreadBadge;
     // End of variables declaration//GEN-END:variables
 }

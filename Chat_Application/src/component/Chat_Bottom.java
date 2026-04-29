@@ -17,6 +17,7 @@ import java.awt.event.KeyEvent;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
@@ -35,6 +36,9 @@ public class Chat_Bottom extends javax.swing.JPanel {
         // exit group mode when a user is set
         this.groupId = null;
         this.isGroupMode = false;
+        if (morePopup != null) {
+            morePopup.setVisible(false);
+        }
     }
 
     private Model_User_Account user;
@@ -49,10 +53,10 @@ public class Chat_Bottom extends javax.swing.JPanel {
     private void init() {
         mig = new MigLayout("fill", "0[]0[fill,grow]0[]0", "0[fill]0[]0");
         setLayout(mig);
-        setBackground(new Color(31, 31, 31));
+        setBackground(new Color(22, 24, 29));
 
-        replyPanel = new JPanel(new MigLayout("insets 5, fillx", "[grow]0[]", "[]"));
-        replyPanel.setBackground(new Color(58, 58, 58));
+        replyPanel = new JPanel(new MigLayout("insets 8 10 8 10, fillx", "[grow]0[]", "[]"));
+        replyPanel.setBackground(new Color(36, 39, 47));
         replyLabel = new javax.swing.JLabel("");
         replyLabel.setForeground(new Color(200, 200, 200));
         replyClose = new JButton("x");
@@ -72,27 +76,28 @@ public class Chat_Bottom extends javax.swing.JPanel {
         add(replyPanel, "span, wrap");
         JScrollPane scroll = new JScrollPane();
         scroll.setBorder(null);
-        scroll.setBackground(new Color(58, 58, 58));
-        scroll.getViewport().setBackground(new Color(58, 58, 58));
+        scroll.setBackground(new Color(36, 39, 47));
+        scroll.getViewport().setBackground(new Color(36, 39, 47));
         JIMSendTextPane txt = new JIMSendTextPane();
-        txt.setBackground(new Color(58, 58, 58));
+        txt.setBackground(new Color(36, 39, 47));
         txt.setForeground(Color.WHITE);
         txt.setCaretColor(new Color(63, 167, 250));
         txt.setSelectionColor(new Color(63, 167, 250));
         txt.addKeyListener(new KeyAdapter() {
             @Override
-            public void keyTyped(KeyEvent ke) {
+            public void keyPressed(KeyEvent ke) {
                 refresh();
-                if (ke.getKeyChar() == 10 && ke.isControlDown()) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER && !ke.isShiftDown()) {
+                    ke.consume();
                     eventSend(txt);
                 }
             }
         });
-        txt.setBorder(new EmptyBorder(5, 20, 5, 5));
-        txt.setHintText(" Aa");
+        txt.setBorder(new EmptyBorder(8, 14, 8, 8));
+        txt.setHintText("Type a message...");
         scroll.setViewportView(txt);
         JScrollBar sb = new JScrollBar();
-        sb.setBackground(new Color(58, 58, 58));
+        sb.setBackground(new Color(36, 39, 47));
         sb.putClientProperty(FlatClientProperties.STYLE, "" + "width:2;" + "thumbInsets:0,0,0,0;" + "track:#E5E5E5;");
         sb.setUnitIncrement(10);
         scroll.setVerticalScrollBar(sb);
@@ -101,12 +106,13 @@ public class Chat_Bottom extends javax.swing.JPanel {
         JPanel panel = new JPanel();
         panel.setLayout(new MigLayout("filly", "0[]5[]20", "0[bottom]0"));
         panel.setPreferredSize(new Dimension(30, 28));
-        panel.setBackground(new Color(58, 58, 58));
+        panel.setBackground(new Color(36, 39, 47));
         JButton cmd = new JButton();
         cmd.setBorder(null);
         cmd.setContentAreaFilled(false);
         cmd.setCursor(new Cursor(Cursor.HAND_CURSOR));
         cmd.setIcon(new ImageIcon(getClass().getResource("/images/icon-send.png")));
+        cmd.setToolTipText("Send message (Enter)");
         cmd.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
@@ -118,19 +124,17 @@ public class Chat_Bottom extends javax.swing.JPanel {
         cmdMore.setContentAreaFilled(false);
         cmdMore.setCursor(new Cursor(Cursor.HAND_CURSOR));
         cmdMore.setIcon(new ImageIcon(getClass().getResource("/images/more_disable.png")));
+        cmdMore.setToolTipText("Open emoji and attachments");
         cmdMore.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                if (panelMore.isVisible()) {
+                if (morePopup.isVisible()) {
+                    morePopup.setVisible(false);
                     cmdMore.setIcon(new ImageIcon(getClass().getResource("/images/more_disable.png")));
-                    panelMore.setVisible(false);
-                    mig.setComponentConstraints(panelMore, "dock south,h 0!");
-                    revalidate();
                 } else {
                     cmdMore.setIcon(new ImageIcon(getClass().getResource("/images/more.png")));
-                    panelMore.setVisible(true);
-                    mig.setComponentConstraints(panelMore, "dock south,h 170!");
-                    revalidate();
+                    panelMore.setPreferredSize(new Dimension(320, 200));
+                    morePopup.show(cmdMore, -286, -(panelMore.getPreferredSize().height + 10));
                 }
             }
         });
@@ -138,8 +142,24 @@ public class Chat_Bottom extends javax.swing.JPanel {
         panel.add(cmd);
         add(panel, "wrap");
         panelMore = new Panel_More();
-        panelMore.setVisible(false);
-        add(panelMore, "dock south,h 0!");
+        morePopup = new JPopupMenu();
+        morePopup.setBorder(javax.swing.BorderFactory.createLineBorder(new Color(46, 53, 67)));
+        morePopup.add(panelMore);
+        morePopup.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
+            @Override
+            public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent e) {
+            }
+
+            @Override
+            public void popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent e) {
+                cmdMore.setIcon(new ImageIcon(getClass().getResource("/images/more_disable.png")));
+            }
+
+            @Override
+            public void popupMenuCanceled(javax.swing.event.PopupMenuEvent e) {
+                cmdMore.setIcon(new ImageIcon(getClass().getResource("/images/more_disable.png")));
+            }
+        });
     }
 
     public void setGroup(model.Model_Group group) {
@@ -147,11 +167,17 @@ public class Chat_Bottom extends javax.swing.JPanel {
             this.groupId = null;
             this.isGroupMode = false;
             panelMore.setUser(user);
+            if (morePopup != null) {
+                morePopup.setVisible(false);
+            }
             return;
         }
         this.groupId = group.getGroupID();
         this.isGroupMode = true;
-        panelMore.setUser(null);
+        panelMore.setGroup(group.getGroupID());
+        if (morePopup != null) {
+            morePopup.setVisible(false);
+        }
     }
 
     private void eventSend(JIMSendTextPane txt) {
@@ -160,6 +186,14 @@ public class Chat_Bottom extends javax.swing.JPanel {
             int toId = isGroupMode && groupId != null ? groupId : (user != null ? user.getUserID() : 0);
             Model_Send_Message message = new Model_Send_Message(MessageType.TEXT,
                     Service.getInstance().getUser().getUserID(), toId, text);
+            if (isGroupMode && groupId != null) {
+                Service.getInstance().recordGroupPreview(groupId, text, System.currentTimeMillis());
+            } else if (user != null) {
+                Service.getInstance().recordUserPreview(user.getUserID(), text, System.currentTimeMillis());
+            }
+            if (PublicEvent.getInstance().getEventMenuLeft() != null) {
+                PublicEvent.getInstance().getEventMenuLeft().refreshUnreadBadges();
+            }
             applyReply(message);
             send(message);
             PublicEvent.getInstance().getEventChat().sendMessage(message);
@@ -252,6 +286,7 @@ public class Chat_Bottom extends javax.swing.JPanel {
     }
 
     private MigLayout mig;
+    private JPopupMenu morePopup;
     private Panel_More panelMore;
     private JPanel replyPanel;
     private javax.swing.JLabel replyLabel;
