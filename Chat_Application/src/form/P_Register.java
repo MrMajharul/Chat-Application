@@ -10,12 +10,14 @@ public class P_Register extends javax.swing.JPanel {
 
     public P_Register() {
         initComponents();
-        lbTitle.putClientProperty(FlatClientProperties.STYLE, ""
-                + "font:+17;");
-        cmdBackLogin.putClientProperty(FlatClientProperties.STYLE, ""
-                + "font:-2;");
-        lbError.putClientProperty(FlatClientProperties.STYLE, ""
-                + "font:-2;");
+        lbTitle.putClientProperty(FlatClientProperties.STYLE, "font:+10 bold;");
+        cmdBackLogin.putClientProperty(FlatClientProperties.STYLE, "font:-1");
+        lbError.putClientProperty(FlatClientProperties.STYLE, "font:-1");
+        txtUser.putClientProperty(FlatClientProperties.STYLE, "arc:14;focusWidth:1;innerFocusWidth:0");
+        txtPass.putClientProperty(FlatClientProperties.STYLE, "arc:14;focusWidth:1;innerFocusWidth:0");
+        txtRePassword.putClientProperty(FlatClientProperties.STYLE, "arc:14;focusWidth:1;innerFocusWidth:0");
+        cmdRegister.putClientProperty(FlatClientProperties.STYLE, "arc:14;font:+1 bold");
+        cmdBackLogin.setBorder(javax.swing.BorderFactory.createEmptyBorder(6, 8, 6, 8));
     }
 
     @SuppressWarnings("unchecked")
@@ -38,7 +40,7 @@ public class P_Register extends javax.swing.JPanel {
 
         lbTitle.setForeground(new java.awt.Color(255, 255, 255));
         lbTitle.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lbTitle.setText("Register");
+        lbTitle.setText("Create Account");
 
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("User Name");
@@ -66,7 +68,7 @@ public class P_Register extends javax.swing.JPanel {
 
         cmdRegister.setBackground(new java.awt.Color(63, 167, 250));
         cmdRegister.setForeground(new java.awt.Color(255, 255, 255));
-        cmdRegister.setText("Register");
+        cmdRegister.setText("Sign Up");
         cmdRegister.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdRegisterActionPerformed(evt);

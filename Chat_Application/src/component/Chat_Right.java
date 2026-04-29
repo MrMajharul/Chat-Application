@@ -1,8 +1,8 @@
 package component;
 
-import model.Model_File_Sender;
 import java.awt.Color;
 import javax.swing.Icon;
+import model.Model_File_Sender;
 
 public class Chat_Right extends javax.swing.JLayeredPane {
 
@@ -17,11 +17,15 @@ public class Chat_Right extends javax.swing.JLayeredPane {
         } else {
             txt.setText(text);
         }
-        txt.seen();
+        txt.sendSuccess();
     }
 
     public void setImage(Model_File_Sender fileSender) {
         txt.setImage(true, fileSender);
+    }
+
+    public void setImage(model.Model_Receive_Image dataImage) {
+        txt.setImage(true, dataImage);
     }
 
     public void setImage(String... image) {
@@ -37,8 +41,20 @@ public class Chat_Right extends javax.swing.JLayeredPane {
         txt.setEmoji(true, icon);
     }
 
-    public void setTime() {
-        txt.setTime("10:30 PM"); // Testing
+    public void setTime(String time) {
+        txt.setTime(time);
+    }
+
+    public void setStatus(int status, String time) {
+        txt.setStatus(status, time);
+    }
+
+    public void setReply(String userName, String text) {
+        txt.setReply(true, userName, text);
+    }
+
+    public Chat_Item getChatItem() {
+        return txt;
     }
 
     @SuppressWarnings("unchecked")

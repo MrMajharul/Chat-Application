@@ -8,10 +8,12 @@ public class P_Login extends javax.swing.JPanel {
 
     public P_Login() {
         initComponents();
-        lbTitle.putClientProperty(FlatClientProperties.STYLE, ""
-                + "font:+17;");
-        cmdRegister.putClientProperty(FlatClientProperties.STYLE, ""
-                + "font:-2;");
+        lbTitle.putClientProperty(FlatClientProperties.STYLE, "font:+10 bold;");
+        cmdRegister.putClientProperty(FlatClientProperties.STYLE, "font:-1");
+        txtUser.putClientProperty(FlatClientProperties.STYLE, "arc:14;focusWidth:1;innerFocusWidth:0");
+        txtPass.putClientProperty(FlatClientProperties.STYLE, "arc:14;focusWidth:1;innerFocusWidth:0");
+        cmdLogin.putClientProperty(FlatClientProperties.STYLE, "arc:14;font:+1 bold");
+        cmdRegister.setBorder(javax.swing.BorderFactory.createEmptyBorder(6, 8, 6, 8));
     }
 
     @SuppressWarnings("unchecked")
@@ -32,14 +34,14 @@ public class P_Login extends javax.swing.JPanel {
 
         lbTitle.setForeground(new java.awt.Color(255, 255, 255));
         lbTitle.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lbTitle.setText("Login");
+        lbTitle.setText("Welcome Back");
 
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("Username");
 
         txtUser.setBackground(new java.awt.Color(58, 58, 58));
         txtUser.setForeground(new java.awt.Color(216, 216, 216));
-        txtUser.setText("taher");
+        txtUser.setText("");
         txtUser.setCaretColor(new java.awt.Color(63, 167, 250));
         txtUser.setSelectionColor(new java.awt.Color(63, 167, 250));
 
@@ -53,7 +55,7 @@ public class P_Login extends javax.swing.JPanel {
 
         cmdLogin.setBackground(new java.awt.Color(63, 167, 250));
         cmdLogin.setForeground(new java.awt.Color(255, 255, 255));
-        cmdLogin.setText("Login");
+        cmdLogin.setText("Sign In");
         cmdLogin.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdLoginActionPerformed(evt);

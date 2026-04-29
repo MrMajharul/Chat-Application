@@ -1,5 +1,6 @@
 package form;
 
+import com.formdev.flatlaf.FlatClientProperties;
 //import formdev.flatlaf.FlatClientProperties;
 import event.EventLogin;
 import event.EventMessage;
@@ -24,6 +25,10 @@ public class Login extends javax.swing.JPanel {
                 P_Login login = new P_Login();
                 P_Register register = new P_Register();
                 slide.showSlid(login, PanelSlider.SliderType.NONE);
+                pic.putClientProperty(FlatClientProperties.STYLE, "arc:24");
+                jPanel1.putClientProperty(FlatClientProperties.STYLE, "arc:24");
+                jPanel2.putClientProperty(FlatClientProperties.STYLE, "arc:20");
+                slide.putClientProperty(FlatClientProperties.STYLE, "arc:20");
 
                 PublicEvent.getInstance().addEventLogin(new EventLogin() {
 
@@ -109,7 +114,7 @@ public class Login extends javax.swing.JPanel {
                 jPanel2 = new RoundedPanel(30);
                 slide = new swing.PanelSlider();
 
-                setBackground(new java.awt.Color(46, 46, 46));
+                setBackground(new java.awt.Color(18, 20, 24));
 
                 pic.setImage(new javax.swing.ImageIcon(getClass().getResource("/images/icon-transparent.png"))); // NOI18N
 
@@ -122,11 +127,11 @@ public class Login extends javax.swing.JPanel {
                                 picLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                                 .addGap(0, 242, Short.MAX_VALUE));
 
-                jPanel1.setBackground(new java.awt.Color(31, 31, 31));
+                jPanel1.setBackground(new java.awt.Color(24, 26, 31));
 
-                jPanel2.setBackground(new java.awt.Color(31, 31, 31));
+                jPanel2.setBackground(new java.awt.Color(24, 26, 31));
 
-                slide.setBackground(new java.awt.Color(31, 31, 31));
+                slide.setBackground(new java.awt.Color(24, 26, 31));
 
                 javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
                 jPanel2.setLayout(jPanel2Layout);
@@ -176,21 +181,20 @@ public class Login extends javax.swing.JPanel {
                 layout.setHorizontalGroup(
                                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                                 .addGroup(layout.createSequentialGroup()
-                                                                .addGap(95, 95, 95)
+                                                                .addGap(56, 56, 56)
                                                                 .addComponent(pic, javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                                                javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                                                Short.MAX_VALUE)
+                                                                                460, Short.MAX_VALUE)
                                                                 .addPreferredGap(
                                                                                 javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                                                 .addComponent(jPanel1,
                                                                                 javax.swing.GroupLayout.PREFERRED_SIZE,
                                                                                 javax.swing.GroupLayout.DEFAULT_SIZE,
                                                                                 javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                                .addGap(200, 200, 200)));
+                                                                .addGap(56, 56, 56)));
                 layout.setVerticalGroup(
                                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                                 .addGroup(layout.createSequentialGroup()
-                                                                .addContainerGap()
+                                                                .addGap(32, 32, 32)
                                                                 .addGroup(layout.createParallelGroup(
                                                                                 javax.swing.GroupLayout.Alignment.LEADING)
                                                                                 .addComponent(pic,
@@ -199,13 +203,13 @@ public class Login extends javax.swing.JPanel {
                                                                                                 Short.MAX_VALUE)
                                                                                 .addGroup(javax.swing.GroupLayout.Alignment.TRAILING,
                                                                                                 layout.createSequentialGroup()
-                                                                                                                .addGap(0, 100, Short.MAX_VALUE)
+                                                                                                                .addGap(0, 72, Short.MAX_VALUE)
                                                                                                                 .addComponent(jPanel1,
                                                                                                                                 javax.swing.GroupLayout.PREFERRED_SIZE,
                                                                                                                                 javax.swing.GroupLayout.DEFAULT_SIZE,
                                                                                                                                 javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                                                                                .addGap(0, 100, Short.MAX_VALUE)))
-                                                                .addGap(9, 9, 9)));
+                                                                                                                .addGap(0, 72, Short.MAX_VALUE)))
+                                                                .addGap(32, 32, 32)));
         }// </editor-fold>//GEN-END:initComponents
 
         // Variables declaration - do not modify//GEN-BEGIN:variables

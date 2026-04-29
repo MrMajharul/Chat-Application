@@ -8,6 +8,7 @@ import event.PublicEvent;
 import main.Main;
 import model.Model_Send_Message;
 import model.Model_User_Account;
+import model.Model_Update_Avatar;
 import service.Service;
 import swing.WrapLayout;
 import java.awt.Component;
@@ -19,6 +20,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.util.Base64;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -29,6 +32,7 @@ import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileFilter;
 import net.miginfocom.swing.MigLayout;
+import io.socket.client.Ack;
 
 public class Panel_More extends javax.swing.JPanel {
     public Model_User_Account getUser() {
@@ -59,6 +63,7 @@ public class Panel_More extends javax.swing.JPanel {
         panelHeader.setOpaque(false);
         panelHeader.setBackground(new java.awt.Color(31, 31, 31));
         panelHeader.setLayout(new BoxLayout(panelHeader, BoxLayout.LINE_AXIS));
+        panelHeader.add(getButtonAvatar());
         panelHeader.add(getButtonImage());
         panelHeader.add(getButtonFile());
         panelHeader.add(getEmojiStyle1());
@@ -120,6 +125,46 @@ public class Panel_More extends javax.swing.JPanel {
                             Service.getInstance().addFile(file, message);
                             PublicEvent.getInstance().getEventChat().sendMessage(message);
                         }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        return cmd;
+    }
+
+    private JButton getButtonAvatar() {
+        OptionButton cmd = new OptionButton();
+        cmd.setIcon(new ImageIcon(getClass().getResource("/images/user.png")));
+        cmd.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                JFileChooser ch = new JFileChooser();
+                ch.setFileFilter(new FileFilter() {
+                    @Override
+                    public boolean accept(File file) {
+                        return file.isDirectory() || isImageFile(file);
+                    }
+
+                    @Override
+                    public String getDescription() {
+                        return "Image File";
+                    }
+                });
+                int option = ch.showOpenDialog(Main.getFrames()[0]);
+                if (option == JFileChooser.APPROVE_OPTION) {
+                    File file = ch.getSelectedFile();
+                    try {
+                        byte[] bytes = Files.readAllBytes(file.toPath());
+                        String base64 = Base64.getEncoder().encodeToString(bytes);
+                        Model_Update_Avatar update = new Model_Update_Avatar(Service.getInstance().getUser().getUserID(), base64);
+                        Service.getInstance().getClient().emit("update_avatar", update.toJsonObject(), new Ack() {
+                            @Override
+                            public void call(Object... os) {
+                                // server will broadcast user_update on success
+                            }
+                        });
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

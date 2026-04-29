@@ -8,6 +8,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.geom.RoundRectangle2D;
+import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
 public class Chat_Title extends JPanel {
@@ -20,7 +21,9 @@ public class Chat_Title extends JPanel {
     public Chat_Title() {
         initComponents();
         setOpaque(false);
-        lbName.putClientProperty(FlatClientProperties.STYLE, "" + "font:+1 bold;");
+        lbName.putClientProperty(FlatClientProperties.STYLE, "font:+3 bold;");
+        lbStatus.putClientProperty(FlatClientProperties.STYLE, "font:+0");
+        setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
     }
 
     public void setUserName(Model_User_Account user) {
@@ -45,13 +48,20 @@ public class Chat_Title extends JPanel {
     }
 
     private void statusActive() {
-        lbStatus.setText("Active now");
-        lbStatus.setForeground(new java.awt.Color(40, 147, 59));
+        lbStatus.setText("● Online now");
+        lbStatus.setForeground(new java.awt.Color(88, 200, 125));
     }
 
     private void setStatusText(String text) {
         lbStatus.setText(text);
-        lbStatus.setForeground(new Color(160, 160, 160));
+        lbStatus.setForeground(new Color(170, 178, 194));
+    }
+
+    public void setGroupName(String groupName) {
+        this.user = null;
+        lbName.setText(groupName);
+        lbStatus.setText("● Group conversation");
+        lbStatus.setForeground(new java.awt.Color(110, 178, 255));
     }
 
     @Override
@@ -70,27 +80,31 @@ public class Chat_Title extends JPanel {
         layer = new javax.swing.JLayeredPane();
         lbName = new javax.swing.JLabel();
         lbStatus = new javax.swing.JLabel();
-        setBackground(new java.awt.Color(31, 31, 31));
-        layer.setLayout(new java.awt.GridLayout(0, 1));
-        lbName.setFont(new java.awt.Font("Segoe UI", 1, 12));
-        lbName.setForeground(new java.awt.Color(255, 255, 255));
+        setBackground(new java.awt.Color(24, 26, 31));
+        layer.setLayout(new java.awt.GridLayout(0, 1, 0, 2));
+        lbName.setFont(new java.awt.Font("Segoe UI", 1, 16));
+        lbName.setForeground(new java.awt.Color(242, 245, 252));
         lbName.setText("Name");
         layer.add(lbName);
-        lbStatus.setForeground(new java.awt.Color(49, 162, 76));
-        lbStatus.setText("Active now");
+        lbStatus.setForeground(new java.awt.Color(88, 200, 125));
+        lbStatus.setText("● Online now");
         layer.add(lbStatus);
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
-        layout.setHorizontalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup().addGap(20, 20, 20)
-                        .addComponent(layer, javax.swing.GroupLayout.PREFERRED_SIZE,
-                                javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(398, Short.MAX_VALUE)));
-        layout.setVerticalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(
-                javax.swing.GroupLayout.Alignment.TRAILING,
-                layout.createSequentialGroup().addGap(3, 3, 3)
-                        .addComponent(layer, javax.swing.GroupLayout.DEFAULT_SIZE, 34, Short.MAX_VALUE)
-                        .addGap(3, 3, 3)));
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+            .addGap(10, 10, 10)
+            .addComponent(layer, javax.swing.GroupLayout.DEFAULT_SIZE, 507, Short.MAX_VALUE)
+            .addGap(10, 10, 10))
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+            .addGap(6, 6, 6)
+            .addComponent(layer, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(6, 6, 6))
+        );
     }
 
     private javax.swing.JLayeredPane layer;

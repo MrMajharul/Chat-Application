@@ -21,6 +21,8 @@ import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
 import net.miginfocom.swing.MigLayout;
+import io.socket.client.Ack;
+import java.util.UUID;
 
 public class Chat_Bottom extends javax.swing.JPanel {
     public Model_User_Account getUser() {
@@ -30,9 +32,14 @@ public class Chat_Bottom extends javax.swing.JPanel {
     public void setUser(Model_User_Account user) {
         this.user = user;
         panelMore.setUser(user);
+        // exit group mode when a user is set
+        this.groupId = null;
+        this.isGroupMode = false;
     }
 
     private Model_User_Account user;
+    private Integer groupId = null;
+    private boolean isGroupMode = false;
 
     public Chat_Bottom() {
         initComponents();
@@ -43,6 +50,26 @@ public class Chat_Bottom extends javax.swing.JPanel {
         mig = new MigLayout("fill", "0[]0[fill,grow]0[]0", "0[fill]0[]0");
         setLayout(mig);
         setBackground(new Color(31, 31, 31));
+
+        replyPanel = new JPanel(new MigLayout("insets 5, fillx", "[grow]0[]", "[]"));
+        replyPanel.setBackground(new Color(58, 58, 58));
+        replyLabel = new javax.swing.JLabel("");
+        replyLabel.setForeground(new Color(200, 200, 200));
+        replyClose = new JButton("x");
+        replyClose.setBorder(null);
+        replyClose.setContentAreaFilled(false);
+        replyClose.setForeground(new Color(200, 200, 200));
+        replyClose.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        replyClose.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                clearReply();
+            }
+        });
+        replyPanel.add(replyLabel, "growx");
+        replyPanel.add(replyClose);
+        replyPanel.setVisible(false);
+        add(replyPanel, "span, wrap");
         JScrollPane scroll = new JScrollPane();
         scroll.setBorder(null);
         scroll.setBackground(new Color(58, 58, 58));
@@ -115,23 +142,97 @@ public class Chat_Bottom extends javax.swing.JPanel {
         add(panelMore, "dock south,h 0!");
     }
 
+    public void setGroup(model.Model_Group group) {
+        if (group == null) {
+            this.groupId = null;
+            this.isGroupMode = false;
+            panelMore.setUser(user);
+            return;
+        }
+        this.groupId = group.getGroupID();
+        this.isGroupMode = true;
+        panelMore.setUser(null);
+    }
+
     private void eventSend(JIMSendTextPane txt) {
         String text = txt.getText().trim();
         if (!text.equals("")) {
+            int toId = isGroupMode && groupId != null ? groupId : (user != null ? user.getUserID() : 0);
             Model_Send_Message message = new Model_Send_Message(MessageType.TEXT,
-                    Service.getInstance().getUser().getUserID(), user.getUserID(), text);
+                    Service.getInstance().getUser().getUserID(), toId, text);
+            applyReply(message);
             send(message);
             PublicEvent.getInstance().getEventChat().sendMessage(message);
             txt.setText("");
             txt.grabFocus();
             refresh();
+            clearReply();
         } else {
             txt.grabFocus();
         }
     }
 
     private void send(Model_Send_Message data) {
-        Service.getInstance().getClient().emit("send_to_user", data.toJsonObject());
+        String clientId = UUID.randomUUID().toString();
+        data.setClientId(clientId);
+        if (isGroupMode && groupId != null) {
+            Service.getInstance().getClient().emit("send_to_group", data.toJsonObject(), new Ack() {
+                @Override
+                public void call(Object... os) {
+                    if (os != null && os.length >= 4 && (Boolean) os[0]) {
+                        int messageID = (Integer) os[1];
+                        long createdAt = ((Number) os[2]).longValue();
+                        String ackClientId = (String) os[3];
+                        PublicEvent.getInstance().getEventChat().messageAcked(ackClientId, messageID, createdAt, 0);
+                    }
+                }
+            });
+        } else {
+            Service.getInstance().getClient().emit("send_to_user", data.toJsonObject(), new Ack() {
+                @Override
+                public void call(Object... os) {
+                    if (os != null && os.length >= 4 && (Boolean) os[0]) {
+                        int messageID = (Integer) os[1];
+                        long createdAt = ((Number) os[2]).longValue();
+                        String ackClientId = (String) os[3];
+                        PublicEvent.getInstance().getEventChat().messageAcked(ackClientId, messageID, createdAt, 0);
+                    }
+                }
+            });
+        }
+    }
+
+    public void sendExternal(Model_Send_Message data) {
+        send(data);
+        PublicEvent.getInstance().getEventChat().sendMessage(data);
+    }
+
+    public void setReply(String userName, String text, Integer messageID) {
+        if (userName == null || text == null) {
+            return;
+        }
+        replyUserName = userName;
+        replyText = text;
+        replyToMessageID = messageID;
+        replyLabel.setText("Reply to " + userName + ": " + text);
+        replyPanel.setVisible(true);
+        revalidate();
+    }
+
+    private void clearReply() {
+        replyUserName = null;
+        replyText = null;
+        replyToMessageID = null;
+        replyPanel.setVisible(false);
+        revalidate();
+    }
+
+    private void applyReply(Model_Send_Message message) {
+        if (replyUserName != null && replyText != null) {
+            message.setReplyUserName(replyUserName);
+            message.setReplyText(replyText);
+            message.setReplyToMessageID(replyToMessageID);
+        }
     }
 
     private void refresh() {
@@ -152,4 +253,10 @@ public class Chat_Bottom extends javax.swing.JPanel {
 
     private MigLayout mig;
     private Panel_More panelMore;
+    private JPanel replyPanel;
+    private javax.swing.JLabel replyLabel;
+    private JButton replyClose;
+    private Integer replyToMessageID;
+    private String replyUserName;
+    private String replyText;
 }

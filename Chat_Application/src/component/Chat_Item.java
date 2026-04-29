@@ -49,14 +49,18 @@ public class Chat_Item extends javax.swing.JLayeredPane {
     }
 
     public void setTime(String time) {
-        JLayeredPane layer = new JLayeredPane();
-        layer.setLayout(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        layer.setBorder(new EmptyBorder(0, 5, 10, 5));
-        label = new JLabel(time);
-        label.setForeground(new Color(200, 200, 200));
-        label.setHorizontalTextPosition(JLabel.LEFT);
-        layer.add(label);
-        add(layer);
+        if (label == null) {
+            JLayeredPane layer = new JLayeredPane();
+            layer.setLayout(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+            layer.setBorder(new EmptyBorder(0, 5, 10, 5));
+            label = new JLabel(time);
+            label.setForeground(new Color(200, 200, 200));
+            label.setHorizontalTextPosition(JLabel.LEFT);
+            layer.add(label);
+            add(layer);
+        } else {
+            label.setText(time);
+        }
     }
 
     public void setImage(boolean right, Model_File_Sender fileSender) {
@@ -99,15 +103,63 @@ public class Chat_Item extends javax.swing.JLayeredPane {
         setBackground(null);
     }
 
+    public void setReply(boolean right, String userName, String text) {
+        if (userName == null || text == null) {
+            return;
+        }
+        JLayeredPane layer = new JLayeredPane();
+        layer.setLayout(new FlowLayout(right ? FlowLayout.RIGHT : FlowLayout.LEFT, 0, 0));
+        layer.setBorder(new EmptyBorder(5, 10, 0, 10));
+        JLabel replyLabel = new JLabel("Reply to " + userName + ": " + text);
+        replyLabel.setForeground(new Color(180, 180, 180));
+        replyLabel.putClientProperty(FlatClientProperties.STYLE, "font:-1;");
+        layer.add(replyLabel);
+        add(layer, 0);
+    }
+
     public void sendSuccess() {
         if (label != null) {
             label.setIcon(new ImageIcon(getClass().getResource("/images/tick.png")));
         }
     }
 
+    public void delivered() {
+        if (label != null) {
+            label.setIcon(new ImageIcon(getClass().getResource("/images/double_tick.png")));
+        }
+    }
+
     public void seen() {
         if (label != null) {
             label.setIcon(new ImageIcon(getClass().getResource("/images/double_tick.png")));
+        }
+    }
+
+    public void setStatus(int status, String time) {
+        if (time != null) {
+            if (status == 0) {
+                setTime(time + " • Sent");
+            } else if (status == 1) {
+                setTime(time + " • Delivered");
+            } else if (status == 2) {
+                setTime(time + " • Seen");
+            } else {
+                setTime(time);
+            }
+        }
+        if (label != null) {
+            if (status == 2) {
+                label.setForeground(new Color(63, 167, 250));
+            } else {
+                label.setForeground(new Color(200, 200, 200));
+            }
+        }
+        if (status == 0) {
+            sendSuccess();
+        } else if (status == 1) {
+            delivered();
+        } else if (status == 2) {
+            seen();
         }
     }
 

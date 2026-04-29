@@ -1,8 +1,8 @@
 package component;
 
-import model.Model_Receive_Image;
 import java.awt.Color;
 import javax.swing.Icon;
+import model.Model_Receive_Image;
 
 public class Chat_Left extends javax.swing.JLayeredPane {
 
@@ -39,8 +39,16 @@ public class Chat_Left extends javax.swing.JLayeredPane {
         txt.setEmoji(false, icon);
     }
 
-    public void setTime() {
-        txt.setTime("10:30 PM"); // Testing
+    public void setTime(String time) {
+        txt.setTime(time);
+    }
+
+    public void setReply(String userName, String text) {
+        txt.setReply(false, userName, text);
+    }
+
+    public Chat_Item getChatItem() {
+        return txt;
     }
 
     @SuppressWarnings("unchecked")

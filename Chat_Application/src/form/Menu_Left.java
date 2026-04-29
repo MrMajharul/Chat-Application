@@ -5,18 +5,31 @@ import component.Item_People;
 import event.EventMenuLeft;
 import event.PublicEvent;
 import model.Model_User_Account;
+import model.Model_Update_Avatar;
 import java.awt.Component;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.Base64;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Box;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileFilter;
 import net.miginfocom.swing.MigLayout;
 import swing.RoundedPanel;
+import service.Service;
+import io.socket.client.Ack;
 
 public class Menu_Left extends javax.swing.JPanel {
     private List<Model_User_Account> userAccount;
+    private List<model.Model_Group> groupAccount;
 
     public Menu_Left() {
         initComponents();
@@ -32,12 +45,15 @@ public class Menu_Left extends javax.swing.JPanel {
         sp.getVerticalScrollBar().setUnitIncrement(10);
         menuList.setLayout(new MigLayout("fillx", "0[fill]0", "0[]0"));
         userAccount = new ArrayList<>();
+        groupAccount = new ArrayList<>();
         PublicEvent.getInstance().addEventMenuLeft(new EventMenuLeft() {
             @Override
             public void newUser(List<Model_User_Account> users) {
                 for (Model_User_Account d : users) {
                     userAccount.add(d);
-                    menuList.add(new Item_People(d), "wrap");
+                    Item_People item = new Item_People(d);
+                    item.setUnreadCount(Service.getInstance().getUnreadUserCount(d.getUserID()));
+                    menuList.add(item, "wrap");
                     refreshMenuList();
                 }
             }
@@ -81,24 +97,194 @@ public class Menu_Left extends javax.swing.JPanel {
                     }
                 }
             }
+
+            @Override
+            public void updateUser(Model_User_Account user) {
+                for (Model_User_Account u : userAccount) {
+                    if (u.getUserID() == user.getUserID()) {
+                        u.setUserName(user.getUserName());
+                        u.setGender(user.getGender());
+                        u.setImage(user.getImage());
+                        if (menuMessage.isSelected()) {
+                            for (Component com : menuList.getComponents()) {
+                                Item_People item = (Item_People) com;
+                                if (item.getUser().getUserID() == user.getUserID()) {
+                                    item.updateUser();
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+
+            @Override
+            public List<Model_User_Account> getUserList() {
+                return userAccount;
+            }
+
+            @Override
+            public void newGroup(List<model.Model_Group> groups) {
+                for (model.Model_Group g : groups) {
+                    groupAccount.add(g);
+                    if (menuGroup.isSelected()) {
+                        component.Item_Group item = new component.Item_Group(g);
+                        item.setUnreadCount(Service.getInstance().getUnreadGroupCount(g.getGroupID()));
+                        menuList.add(item, "wrap");
+                        refreshMenuList();
+                    }
+                }
+            }
+
+            @Override
+            public List<model.Model_Group> getGroupList() {
+                return groupAccount;
+            }
+
+            @Override
+            public void refreshUnreadBadges() {
+                applySelectionState();
+                refreshMenuList();
+            }
         });
         showMessage();
+        initHeaderActions();
         scrollWrapper.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
         scrollWrapper.setOpaque(false);
         menu.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
         menu.setOpaque(false);
     }
 
+    private void initHeaderActions() {
+        JPanel header = new JPanel(new MigLayout("ins 12 12 12 12, fillx", "[grow,fill]12[fill]", "[]4[]"));
+        header.setBackground(new java.awt.Color(24, 26, 31));
+        javax.swing.JLabel title = new javax.swing.JLabel("Chat Studio");
+        title.setForeground(new java.awt.Color(255, 255, 255));
+        title.setFont(title.getFont().deriveFont(java.awt.Font.BOLD, 18f));
+        javax.swing.JLabel subtitle = new javax.swing.JLabel("Messages and groups");
+        subtitle.setForeground(new java.awt.Color(160, 165, 175));
+        subtitle.setFont(subtitle.getFont().deriveFont(12f));
+        JPanel titleBox = new JPanel(new MigLayout("ins 0, fillx", "[fill]", "[]2[]"));
+        titleBox.setOpaque(false);
+        titleBox.add(title, "wrap");
+        titleBox.add(subtitle);
+        JButton profileButton = new JButton("Edit Profile");
+        profileButton.setForeground(new java.awt.Color(232, 236, 245));
+        profileButton.setBackground(new java.awt.Color(37, 41, 50));
+        profileButton.setFocusPainted(false);
+        profileButton.setBorder(javax.swing.BorderFactory.createEmptyBorder(6, 10, 6, 10));
+        profileButton.putClientProperty(FlatClientProperties.STYLE, "arc:14");
+        profileButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        profileButton.setToolTipText("Update your profile image");
+        profileButton.addActionListener(evt -> updateProfileAvatar());
+        JButton groupButton = new JButton("New Group");
+        groupButton.setForeground(new java.awt.Color(232, 236, 245));
+        groupButton.setBackground(new java.awt.Color(37, 41, 50));
+        groupButton.setFocusPainted(false);
+        groupButton.setBorder(javax.swing.BorderFactory.createEmptyBorder(6, 10, 6, 10));
+        groupButton.putClientProperty(FlatClientProperties.STYLE, "arc:14");
+        groupButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        groupButton.setToolTipText("Create a new group chat");
+        groupButton.addActionListener(evt -> createGroup());
+        header.add(titleBox, "growx");
+        header.add(profileButton);
+        header.add(groupButton, "wrap");
+        scrollWrapper.add(header, java.awt.BorderLayout.NORTH);
+    }
+
+    private void createGroup() {
+        String groupName = JOptionPane.showInputDialog(this, "Enter group name:", "Create Group", JOptionPane.PLAIN_MESSAGE);
+        if (groupName != null && !groupName.trim().isEmpty()) {
+            List<Integer> members = new ArrayList<>();
+            // For now, let's just add all users as members for simplicity in this demo
+            // In a real app, you'd have a selection UI
+            for (Model_User_Account u : userAccount) {
+                members.add(u.getUserID());
+            }
+            if (members.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No users available to add to group", "Create Group", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            model.Model_Create_Group data = new model.Model_Create_Group(groupName, service.Service.getInstance().getUser().getUserID(), members);
+            service.Service.getInstance().getClient().emit("create_group", data.toJsonObject(), new Ack() {
+                @Override
+                public void call(Object... os) {
+                    if (os.length > 0) {
+                        try {
+                            boolean success = (boolean) os[0];
+                            if (success) {
+                                JOptionPane.showMessageDialog(Menu_Left.this, "Group '" + groupName + "' created successfully!", "Create Group", JOptionPane.INFORMATION_MESSAGE);
+                                // Request updated group list
+                                service.Service.getInstance().getClient().emit("list_group", service.Service.getInstance().getUser().getUserID());
+                            } else {
+                                JOptionPane.showMessageDialog(Menu_Left.this, "Failed to create group. Please try again.", "Create Group", JOptionPane.ERROR_MESSAGE);
+                            }
+                        } catch (Exception e) {
+                            JOptionPane.showMessageDialog(Menu_Left.this, "Error creating group: " + e.getMessage(), "Create Group", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(Menu_Left.this, "No response from server", "Create Group", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
+        }
+    }
+
+    private void updateProfileAvatar() {
+        JFileChooser ch = new JFileChooser();
+        ch.setFileFilter(new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                String name = file.getName().toLowerCase();
+                return file.isDirectory() || name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".jpeg") || name.endsWith(".gif");
+            }
+
+            @Override
+            public String getDescription() {
+                return "Image File";
+            }
+        });
+        int option = ch.showOpenDialog(this);
+        if (option == JFileChooser.APPROVE_OPTION) {
+            File file = ch.getSelectedFile();
+            try {
+                byte[] bytes = Files.readAllBytes(file.toPath());
+                String base64 = Base64.getEncoder().encodeToString(bytes);
+                Model_Update_Avatar update = new Model_Update_Avatar(Service.getInstance().getUser().getUserID(), base64);
+                Service.getInstance().getClient().emit("update_avatar", update.toJsonObject(), new Ack() {
+                    @Override
+                    public void call(Object... os) {
+                        // server broadcasts user_update
+                    }
+                });
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Avatar update failed: " + e.getMessage(), "Profile",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
     private void showMessage() {
         menuList.removeAll();
         for (Model_User_Account d : userAccount) {
-            menuList.add(new Item_People(d), "wrap");
+            Item_People item = new Item_People(d);
+            item.setUnreadCount(Service.getInstance().getUnreadUserCount(d.getUserID()));
+            menuList.add(item, "wrap");
         }
+        applySelectionState();
         refreshMenuList();
     }
 
     private void showGroup() {
         menuList.removeAll();
+        for (model.Model_Group g : groupAccount) {
+            component.Item_Group item = new component.Item_Group(g);
+            item.setUnreadCount(Service.getInstance().getUnreadGroupCount(g.getGroupID()));
+            menuList.add(item, "wrap");
+        }
+        applySelectionState();
         refreshMenuList();
     }
 
@@ -110,6 +296,22 @@ public class Menu_Left extends javax.swing.JPanel {
     private void refreshMenuList() {
         menuList.repaint();
         menuList.revalidate();
+    }
+
+    private void applySelectionState() {
+        Integer selectedUserId = Service.getInstance().getCurrentChatUserId();
+        Integer selectedGroupId = Service.getInstance().getCurrentChatGroupId();
+        for (Component com : menuList.getComponents()) {
+            if (com instanceof Item_People) {
+                Item_People item = (Item_People) com;
+                item.setSelectedItem(selectedUserId != null && item.getUser().getUserID() == selectedUserId);
+                item.setUnreadCount(Service.getInstance().getUnreadUserCount(item.getUser().getUserID()));
+            } else if (com instanceof component.Item_Group) {
+                component.Item_Group item = (component.Item_Group) com;
+                item.setSelectedItem(selectedGroupId != null && item.getGroup().getGroupID() == selectedGroupId);
+                item.setUnreadCount(Service.getInstance().getUnreadGroupCount(item.getGroup().getGroupID()));
+            }
+        }
     }
 
     private void addHoverEffect(JComponent comp) {
@@ -141,8 +343,8 @@ public class Menu_Left extends javax.swing.JPanel {
         sp = new javax.swing.JScrollPane();
         menuList = new javax.swing.JPanel();
         scrollWrapper = new swing.RoundedPanel(20);
-        setBackground(new java.awt.Color(46, 46, 46));
-        menu.setBackground(new java.awt.Color(31, 31, 31));
+        setBackground(new java.awt.Color(18, 20, 24));
+        menu.setBackground(new java.awt.Color(24, 26, 31));
         menu.setOpaque(true);
         menu.setLayout(new javax.swing.BoxLayout(menu, javax.swing.BoxLayout.Y_AXIS));
         menuMessage.setIconSelected(new javax.swing.ImageIcon(getClass().getResource("/images/icon-chat-active.png")));
@@ -186,10 +388,10 @@ public class Menu_Left extends javax.swing.JPanel {
         sp.setBorder(null);
         sp.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         sp.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        menuList.setBackground(new java.awt.Color(31, 31, 31));
+        menuList.setBackground(new java.awt.Color(24, 26, 31));
         menuList.setLayout(new net.miginfocom.swing.MigLayout("fillx, wrap", "[fill]", "[]"));
         sp.setViewportView(menuList);
-        scrollWrapper.setBackground(new java.awt.Color(31, 31, 31));
+        scrollWrapper.setBackground(new java.awt.Color(24, 26, 31));
         scrollWrapper.setLayout(new java.awt.BorderLayout());
         scrollWrapper.add(sp, java.awt.BorderLayout.CENTER);
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -199,7 +401,7 @@ public class Menu_Left extends javax.swing.JPanel {
                 layout.createSequentialGroup().addGap(0, 0, 0)
                         .addComponent(menu, javax.swing.GroupLayout.PREFERRED_SIZE, 70,
                                 javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
+                        .addGap(12, 12, 12)
                         .addComponent(scrollWrapper, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
                         .addGap(0, 0, 0)));
         layout.setVerticalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -220,6 +422,9 @@ public class Menu_Left extends javax.swing.JPanel {
             menuMessage.setSelected(true);
             menuGroup.setSelected(false);
             showMessage();
+        } else {
+            applySelectionState();
+            refreshMenuList();
         }
     }
 
@@ -228,6 +433,9 @@ public class Menu_Left extends javax.swing.JPanel {
             menuMessage.setSelected(false);
             menuGroup.setSelected(true);
             showGroup();
+        } else {
+            applySelectionState();
+            refreshMenuList();
         }
     }
 

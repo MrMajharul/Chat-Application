@@ -13,15 +13,21 @@ public class Home extends javax.swing.JLayeredPane {
     }
 
     private void init() {
-        setLayout(new MigLayout("fillx, filly", "0[340!]5[fill, 100%]0", "0[fill]0"));
-        this.add(new Menu_Left());
+        setLayout(new MigLayout("fillx, filly", "0[320!]0[fill, 100%]0", "0[fill]0"));
+        setBackground(new java.awt.Color(18, 20, 24));
+        this.add(new Menu_Left(), "cell 0 0, grow");
         chat = new Chat();
-        this.add(chat);
+        this.add(chat, "cell 1 0, grow");
         chat.setVisible(false);
     }
 
     public void setUser(Model_User_Account user) {
         chat.setUser(user);
+        chat.setVisible(true);
+    }
+
+    public void setGroup(model.Model_Group group) {
+        chat.setGroup(group);
         chat.setVisible(true);
     }
 

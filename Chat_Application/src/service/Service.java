@@ -7,6 +7,7 @@ import model.Model_File_Sender;
 import model.Model_Receive_Message;
 import model.Model_Send_Message;
 import model.Model_User_Account;
+import model.Model_Message_Status;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
@@ -14,7 +15,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Service {
 
@@ -25,6 +28,11 @@ public class Service {
     private Model_User_Account user;
     private List<Model_File_Sender> fileSender;
     private List<Model_File_Receiver> fileReceiver;
+    private boolean appFocused = true;
+    private Integer currentChatUserId;
+    private Integer currentChatGroupId;
+    private final Map<Integer, Integer> unreadUsers = new HashMap<>();
+    private final Map<Integer, Integer> unreadGroups = new HashMap<>();
 
     public static Service getInstance() {
         if (instance == null) {
@@ -55,6 +63,24 @@ public class Service {
                     PublicEvent.getInstance().getEventMenuLeft().newUser(users);
                 }
             });
+            client.on("list_group", new Emitter.Listener() {
+                @Override
+                public void call(Object... os) {
+                    List<model.Model_Group> groups = new ArrayList<>();
+                    for (Object o : os) {
+                        groups.add(new model.Model_Group(o));
+                    }
+                    PublicEvent.getInstance().getEventMenuLeft().newGroup(groups);
+                }
+            });
+            client.on("new_group", new Emitter.Listener() {
+                @Override
+                public void call(Object... os) {
+                    List<model.Model_Group> groups = new ArrayList<>();
+                    groups.add(new model.Model_Group(os[0]));
+                    PublicEvent.getInstance().getEventMenuLeft().newGroup(groups);
+                }
+            });
             client.on("user_status", new Emitter.Listener() {
                 @Override
                 public void call(Object... os) {
@@ -73,12 +99,70 @@ public class Service {
                 @Override
                 public void call(Object... os) {
                     Model_Receive_Message message = new Model_Receive_Message(os[0]);
+                    updateUnreadState(message);
                     PublicEvent.getInstance().getEventChat().receiveMessage(message);
+                    notifyIncoming(message);
+                }
+            });
+            client.on("message_status", new Emitter.Listener() {
+                @Override
+                public void call(Object... os) {
+                    if (os.length >= 2) {
+                        int messageID = (Integer) os[0];
+                        int status = (Integer) os[1];
+                        PublicEvent.getInstance().getEventChat().updateMessageStatus(messageID, status);
+                    }
+                }
+            });
+            client.on("user_update", new Emitter.Listener() {
+                @Override
+                public void call(Object... os) {
+                    if (os.length > 0) {
+                        Model_User_Account u = new Model_User_Account(os[0]);
+                        if (user != null && user.getUserID() == u.getUserID()) {
+                            user.setImage(u.getImage());
+                        }
+                        PublicEvent.getInstance().getEventMenuLeft().updateUser(u);
+                        PublicEvent.getInstance().getEventMain().updateUser(u);
+                    }
                 }
             });
             client.open();
         } catch (URISyntaxException e) {
             error(e);
+        }
+    }
+
+    private void notifyIncoming(Model_Receive_Message message) {
+        // User asked for notifications always, with preview + sound
+        String sender = resolveUserName(message.getFromUserID());
+        String preview = buildPreview(message);
+        NotificationManager.notifyMessage(sender, preview, true, true, true);
+    }
+
+    private String resolveUserName(int userId) {
+        try {
+            if (PublicEvent.getInstance().getEventMenuLeft() != null) {
+                for (Model_User_Account u : PublicEvent.getInstance().getEventMenuLeft().getUserList()) {
+                    if (u.getUserID() == userId) {
+                        return u.getUserName();
+                    }
+                }
+            }
+        } catch (Exception ignore) {
+        }
+        return "User " + userId;
+    }
+
+    private String buildPreview(Model_Receive_Message message) {
+        if (message.getMessageType() == app.MessageType.TEXT) {
+            return message.getText();
+        } else if (message.getMessageType() == app.MessageType.EMOJI) {
+            return "[Emoji]";
+        } else if (message.getMessageType() == app.MessageType.IMAGE) {
+            return "[Image]";
+        } else {
+            return "[File]";
         }
     }
 
@@ -126,6 +210,74 @@ public class Service {
 
     public void setUser(Model_User_Account user) {
         this.user = user;
+        // Request user groups after login
+        if (user != null && client != null && client.connected()) {
+            client.emit("list_group", user.getUserID());
+        }
+    }
+
+    public boolean isAppFocused() {
+        return appFocused;
+    }
+
+    public void setAppFocused(boolean appFocused) {
+        this.appFocused = appFocused;
+    }
+
+    public Integer getCurrentChatUserId() {
+        return currentChatUserId;
+    }
+
+    public void setCurrentChatUserId(Integer currentChatUserId) {
+        this.currentChatUserId = currentChatUserId;
+    }
+
+    public Integer getCurrentChatGroupId() {
+        return currentChatGroupId;
+    }
+
+    public void setCurrentChatGroupId(Integer currentChatGroupId) {
+        this.currentChatGroupId = currentChatGroupId;
+    }
+
+    public int getUnreadUserCount(int userId) {
+        return unreadUsers.containsKey(userId) ? unreadUsers.get(userId) : 0;
+    }
+
+    public int getUnreadGroupCount(int groupId) {
+        return unreadGroups.containsKey(groupId) ? unreadGroups.get(groupId) : 0;
+    }
+
+    public void clearUnreadUser(int userId) {
+        unreadUsers.remove(userId);
+        refreshUnreadBadges();
+    }
+
+    public void clearUnreadGroup(int groupId) {
+        unreadGroups.remove(groupId);
+        refreshUnreadBadges();
+    }
+
+    private void updateUnreadState(Model_Receive_Message message) {
+        if (message.getGroupID() != null) {
+            int groupId = message.getGroupID();
+            if (currentChatGroupId == null || currentChatGroupId != groupId) {
+                unreadGroups.put(groupId, getUnreadGroupCount(groupId) + 1);
+                refreshUnreadBadges();
+            }
+        } else {
+            int fromUserId = message.getFromUserID();
+            if (currentChatUserId == null || currentChatUserId != fromUserId) {
+                unreadUsers.put(fromUserId, getUnreadUserCount(fromUserId) + 1);
+                refreshUnreadBadges();
+            }
+        }
+    }
+
+    private void refreshUnreadBadges() {
+        if (PublicEvent.getInstance().getEventMenuLeft() != null) {
+            PublicEvent.getInstance().getEventMenuLeft().refreshUnreadBadges();
+        }
     }
 
     private void error(Exception e) {

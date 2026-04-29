@@ -2,14 +2,17 @@ package main;
 
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.fonts.roboto.FlatRobotoFont;
-import com.formdev.flatlaf.themes.FlatMacLightLaf;
+import com.formdev.flatlaf.themes.FlatMacDarkLaf;
 import event.EventImageView;
 import event.EventMain;
 import event.PublicEvent;
 import model.Model_User_Account;
 import service.Service;
+import service.NotificationManager;
 import java.awt.EventQueue;
 import java.awt.Font;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.UIManager;
@@ -30,6 +33,18 @@ public class Main extends javax.swing.JFrame {
         home.setVisible(false);
         initEvent();
         Service.getInstance().startServer();
+        NotificationManager.init(this);
+        addWindowFocusListener(new WindowAdapter() {
+            @Override
+            public void windowGainedFocus(WindowEvent e) {
+                Service.getInstance().setAppFocused(true);
+            }
+
+            @Override
+            public void windowLostFocus(WindowEvent e) {
+                Service.getInstance().setAppFocused(false);
+            }
+        });
     }
 
     private void initEvent() {
@@ -44,11 +59,17 @@ public class Main extends javax.swing.JFrame {
                 home.setVisible(true);
                 login.setVisible(false);
                 Service.getInstance().getClient().emit("list_user", Service.getInstance().getUser().getUserID());
+                Service.getInstance().getClient().emit("list_group", Service.getInstance().getUser().getUserID());
             }
 
             @Override
             public void selectUser(Model_User_Account user) {
                 home.setUser(user);
+            }
+
+            @Override
+            public void selectGroup(model.Model_Group group) {
+                home.setGroup(group);
             }
 
             @Override
@@ -92,7 +113,7 @@ public class Main extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        background.setBackground(new java.awt.Color(46, 46, 46));
+        background.setBackground(new java.awt.Color(18, 20, 24));
 
         body.setLayout(new java.awt.CardLayout());
 
@@ -149,7 +170,13 @@ public class Main extends javax.swing.JFrame {
         FlatRobotoFont.install();
         FlatLaf.registerCustomDefaultsSource("themes");
         UIManager.put("defaultFont", new Font(FlatRobotoFont.FAMILY, Font.PLAIN, 13));
-        FlatMacLightLaf.setup();
+        UIManager.put("Panel.background", new java.awt.Color(18, 20, 24));
+        UIManager.put("Component.arc", 18);
+        UIManager.put("Button.arc", 18);
+        UIManager.put("TextComponent.arc", 18);
+        UIManager.put("ScrollBar.thumbArc", 999);
+        UIManager.put("ScrollBar.trackArc", 999);
+        FlatMacDarkLaf.setup();
         EventQueue.invokeLater(() -> new Main().setVisible(true));
     }
 
